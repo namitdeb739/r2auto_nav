@@ -13,7 +13,7 @@ lookahead_distance = 0.24
 max_velocity = 0.18
 expansion_size = 3
 target_error = 0.15
-robot_r = 0.2
+local_security_distance = 0.2
 path_global = 0
 
 
@@ -137,7 +137,7 @@ def pure_pursuit(current_x, current_y, current_heading, path, index):
     global lookahead_distance
     closest_point = None
     v = max_velocity
-    for i in range(index, en(path)):
+    for i in range(index, len(path)):
         x = path[i][0]
         y = path[i][1]
         distance = math.hypot(current_x - x, current_y - y)
@@ -162,7 +162,7 @@ def pure_pursuit(current_x, current_y, current_heading, path, index):
         v = 0.0
     return v, desired_steering_angle, index
 
-def frontierB(matrix):
+def frontier_B(matrix):
     for i in range(len(matrix)):
         for j in range(len(matrix[i])):
             if matrix[i][j] == 0.0:
@@ -205,7 +205,7 @@ def dfs(matrix, i, j, group, groups):
     dfs(matrix, i + 1, j - 1, group, groups) # lower left diagonal
     return group + 1
 
-def fGroups(groups):
+def f_groups(groups):
     sorted_groups = sorted(groups.items(), key=lambda x: len(x[1]), reverse=True)
     top_five_groups = [g for g in sorted_groups[:5] if len(g[1]) > 2]    
     return top_five_groups
@@ -219,17 +219,17 @@ def calculate_centroid(x_coords, y_coords):
     centroid = (int(mean_x), int(mean_y))
     return centroid
 
-def findClosestGroup(matrix, roups, current, esolution, riginX, riginY):
+def find_closest_group(matrix, groups, current, resolution, originX, originY):
     targetP = None
     distances = []
     paths = []
     score = []
     max_score = -1 #max score index
     for i in range(len(groups)):
-        middle = calculate_centroid([p[0] for p in groups[i][1]], p[1] for p in groups[i][1]]) 
+        middle = calculate_centroid([p[0] for p in groups[i][1]], [p[1] for p in groups[i][1]]) 
         path = astar(matrix, current, middle)
-        path = [(p[1]*resolution+originX, [0]*resolution+originY) for p in path]
-        total_distance = pathLength(path)
+        path = [(p[1] * resolution + originX, p[0] * resolution + originY) for p in path]
+        total_distance = path_length(path)
         distances.append(total_distance)
         paths.append(path)
     for i in range(len(distances)):
@@ -247,72 +247,75 @@ def findClosestGroup(matrix, roups, current, esolution, riginX, riginY):
         # If groups are closer than target_error * 2 distance, it selects
         # a random point as the target. This helps the robot escape some
         # instances
-        index = random.randint(0, en(groups)-1)
+        index = random.randint(0, len(groups)-1)
         target = groups[index][1]
-        target = target[random.randint(0, en(target)-1)]
+        target = target[random.randint(0, len(target)-1)]
         path = astar(matrix, current, target)
-        targetP = [(p[1]*resolution+originX, [0]*resolution+originY) for p in path]
+        targetP = [(p[1] * resolution + originX, p[0] * resolution + originY) for p in path]
     return targetP
-def pathLength(path):
+
+def path_length(path):
     for i in range(len(path)):
-        path[i] = (path[i][0], ath[i][1])
+        path[i] = (path[i][0], path[i][1])
         points = np.array(path)
     differences = np.diff(points, axis=0)
-    distances = np.hypot(differences[:, ], differences[:, ])
+    distances = np.hypot(differences[:, 0], differences[:, 1])
     total_distance = np.sum(distances)
     return total_distance
 
-def costmap(data, idth, eight, esolution):
-    data = np.array(data).reshape(height, idth)
+def costmap(data, width, height, resolution):
+    data = np.array(data).reshape(height, width)
     wall = np.where(data == 100)
-    for i in range(-expansion_size, xpansion_size+1):
-        for j in range(-expansion_size, xpansion_size+1):
+    for i in range(-expansion_size, expansion_size+1):
+        for j in range(-expansion_size, expansion_size+1):
             if i  == 0 and j == 0:
                 continue
             x = wall[0]+i
             y = wall[1]+j
-            x = np.clip(x, , eight-1)
-            y = np.clip(y, , idth-1)
-            data[x, ] = 100
+            x = np.clip(x, 0, height - 1)
+            y = np.clip(y, 0, width - 1)
+            data[x, y] = 100
     data = data*resolution
     return data
 
-def exploration(data, idth, eight, esolution, olumn, ow, riginX, riginY):
-        global path_global # Global variable
-        data = costmap(data, idth, eight, esolution) # Expand obstacles
-        data[row][column] = 0 # Robot current position
-        data[data > 5] = 1 # those with 0 are reachable, those with 100 are
-                           # obstacles
-        data = frontierB(data) # Find border points
-        data, roups = assign_groups(data) # Group breakpoints
-        groups = fGroups(groups) # Sort groups from smallest to largest and get
-                                 # the largest 5 groups
-        if len(groups) == 0: # If no group, the analysis is complete
+def exploration(data, width, height, resolution, column, row, originX, originY):
+    global path_global # Global variable
+    data = costmap(data, width, height, resolution) # Expand obstacles
+    data[row][column] = 0 # Robot current position
+    data[data > 5] = 1 # those with 0 are reachable, those with 100 are
+                       # obstacles
+    data = frontier_B(data) # Find border points
+    data, groups = assign_groups(data) # Group breakpoints
+    groups = f_groups(groups) # Sort groups from smallest to largest and get
+                             # the largest 5 groups
+    if len(groups) == 0: # If no group, the analysis is complete
+        path = -1
+    else: # If there is a group, find the closest one
+        data[data < 0] = 1 # 0.05 are unknowns, mark as such.
+                           # 0 = can go, 1 = cannot go.
+        path = find_closest_group(data, groups, (row, column), 
+                resolution, originX, originY)
+        # Find the closest group
+        if path != None: # If there is a path, fix it with bSpline
+            path = bspline_planning(path, len(path) * 5)
+        else:
             path = -1
-        else: # If there is a group, find the closest one
-            data[data < 0] = 1 # 0.05 are unknowns, mark as such.
-                               # 0 = can go, 1 = cannot go.
-            path = findClosestGroup(data, groups, (row, column), 
-                    resolution, originX, originY)
-            # Find the closest group
-            if path != None: # If there is a path, fix it with bSpline
-                path = bspline_planning(path, len(path) * 5)
-            else:
-                path = -1
-        path_global = path
-        return
+    path_global = path
+    return
 
-def localControl(scan):
+def local_control(scan):
     v = None
     w = None
     for i in range(60):
-        if scan[i] < robot_r:
+        print("Angle: ", i, "Scan: ", scan[i])
+        if scan[i] < local_security_distance:
             v = 0.2
-            w = -math.pi / 4 
+            w = - math.pi / 4 
             break
     if v == None:
         for i in range(300, 360):
-            if scan[i] < robot_r:
+            print("Angle: ", i, "Scan: ", scan[i])
+            if scan[i] < local_security_distance:
                 v = 0.2
                 w = math.pi / 4
                 break
@@ -322,9 +325,12 @@ def localControl(scan):
 class NavigationControl(Node):
     def __init__(self):
         super().__init__('Exploration')
-        self.subscription = self.create_subscription(OccupancyGrid, map', elf.map_callback, 0)
-        self.subscription = self.create_subscription(Odometry, odom', elf.odom_callback, 0)
-        self.subscription = self.create_subscription(LaserScan, scan', elf.scan_callback, 0)
+        self.subscription = self.create_subscription(OccupancyGrid, 'map',
+                self.map_callback, 10)
+        self.subscription = self.create_subscription(Odometry, 'odom',
+                self.odom_callback, 10)
+        self.subscription = self.create_subscription(LaserScan, 'scan',
+                self.scan_callback, 10)
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
         print("[INFO] DISCOVERY MODE ACTIVE")
         self.discovery = True
@@ -333,15 +339,16 @@ class NavigationControl(Node):
         
     def exp(self):
         twist = Twist()
-        while True:# Wait until the sensor data arrives.
-            if not hasattr(self, map_data') or not hasattr(self, odom_data') or not hasattr(self, scan_data'):
+        while True: # Wait until the sensor data arrives.
+            if not hasattr(self, 'map_data') or not hasattr(self, 'odom_data') or not hasattr(self, 'scan_data'):
                 time.sleep(0.1)
                 continue
             if self.discovery == True:
                 if isinstance(path_global, int) and path_global == 0:
                     column = int((self.x - self.originX) / self.resolution)
                     row = int((self.y- self.originY) / self.resolution)
-                    exploration(self.data, elf.width, elf.height, elf.resolution, olumn, ow, elf.originX, elf.originY)
+                    exploration(self.data, self.width, self.height,
+                            self.resolution, column, row, self.originX, self.originY)
                     self.path = path_global
                 else:
                     self.path = path_global
@@ -353,19 +360,18 @@ class NavigationControl(Node):
                 self.discovery = False
                 self.i = 0
                 print("[INFO] NEW TARGET DETERMINED")
-                t = pathLength(self.path) / max_velocity
+                t = path_length(self.path) / max_velocity
                 t = t - 0.2 # 0.2 seconds is subtrated from the time
                             # according to the formula x = v * t.
-                self.t = threading.Timer(t, elf.target_callback) # Runs the recon function before the target.
+                self.t = threading.Timer(t, self.target_callback) # Runs the recon function before the target.
                 self.t.start()
-            
-            # Route tracking block start.
-            else:
-                v, w = localControl(self.scan)
-                print("v, w start values: ", v, w)
+            else: # Route tracking block start.
+                v, w = local_control(self.scan)
+                print("v: ", v, "w: ", w, "path: ", self.path, "current pos: (",
+                        self.x, ", ", self.y, ")")
                 if v == None:
                     v, w, self.i = pure_pursuit(self.x, self.y, self.yaw, self.path, self.i)
-                if(abs(self.x - self.path[-1][0]) < target_error and abs(self.y - self.path[-1][1]) < target_error):
+                if (abs(self.x - self.path[-1][0]) < target_error and abs(self.y - self.path[-1][1]) < target_error):
                     v = 0.0
                     w = 0.0
                     self.discovery = True
@@ -373,7 +379,6 @@ class NavigationControl(Node):
                     self.t.join() # Wait until thread finishes.
                 twist.linear.x = v
                 twist.angular.z = w
-                print("v, w new values: ", v, w)
                 self.publisher.publish(twist)
                 time.sleep(0.1)
             # Route tracking block ends.
