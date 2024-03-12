@@ -14,10 +14,11 @@ import threading
 import time
 
 with open(
-        "~/colcon_ws/src/auto_nav/auto_nav/config/params.yaml", 'r'
+        "/home/namitdeb/colcon_ws/src/auto_nav/auto_nav/config/params.yaml",
+        'r'
         ) as file:
     params = yaml.load(file, Loader=yaml.FullLoader)
-
+ 
 lookahead_distance = params["lookahead_distance"]
 speed = params["speed"]
 expansion_size = params["expansion_size"]
