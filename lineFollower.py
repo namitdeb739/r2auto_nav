@@ -27,13 +27,13 @@ def GPIO_setup():
     GPIO.setup(RR_PIN, GPIO.IN)
 
 class linerMover(Node):
-    twist = Twist()
     def __init__(self):
         super().__init__('auto_nav')
         #publisher for moving TurtleBot
         self.publisher_ = self.create_publisher(Twist, 'cmd_vel', 10)
         self.get_logger().info('Publisher for Twist')
         self.counter = 0
+        twist = Twist()
 
 
     def turnRight(self):
@@ -46,20 +46,20 @@ class linerMover(Node):
 
     def moveStraight(self):
         self.get_logger().info('straight')
-        twist.linear.x = speedchange
-        twist.angular.z = 0
+        self.twist.linear.x = speedchange
+        self.twist.angular.z = 0
 
     def reverse(self):
         self.get_logger().info('reverse')
-        twist.linear.x = -speedchange
+        self.twist.linear.x = -speedchange
 
     def nudgeLeft(self):
         self.get_logger().info('nudgeLeft')
-        twist.angular.z = -rotatechange
+        self.twist.angular.z = -rotatechange
 
     def nudgeRight(self):
         self.get_logger().info('nudgeRight')
-        twist.angular.z = rotatechange
+        self.twist.angular.z = rotatechange
 
     def checkPoint(self):
         self.counter += 1
@@ -67,8 +67,8 @@ class linerMover(Node):
     def stopbot(self):
         self.get_logger().info('In stopbot')
         # publish to cmd_vel to move TurtleBot
-        twist.linear.x = 0.0
-        twist.angular.z = 0.0
+        self.twist.linear.x = 0.0
+        self.twist.angular.z = 0.0
         # time.sleep(1)
         self.publisher_.publish(twist)
 
