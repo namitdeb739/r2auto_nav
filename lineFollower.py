@@ -100,6 +100,7 @@ class linerMover(Node):
             twist = Twist()
             twist.linear.x = self.x
             twist.angular.z = self.z
+            time.sleep(0.1)
             self.publisher_.publish(twist)
             rclpy.spin_once(self)
 
