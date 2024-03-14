@@ -34,47 +34,42 @@ class linerMover(Node):
         self.publisher_ = self.create_publisher(Twist, 'cmd_vel', 10)
         self.get_logger().info('Publisher for Twist')
         self.counter = 0
+        self.x = 0
+        self.z = 0
 
     def turnRight(self):
-        twist = Twist()
         self.get_logger().info('turnRight')
         stopbot()
 
     def turnLeft(self):
-        twist = Twist()
         self.get_logger().info('turnLeft')
         stopbot()
 
     def moveStraight(self):
-        twist = Twist()
         self.get_logger().info('straight')
-        twist.linear.x = speedchange
-        twist.angular.z = 0.0
+        self.x = speedchange
+        self.z = 0.0
 
     def reverse(self):
-        twist = Twist()
         self.get_logger().info('reverse')
-        twist.linear.x = -speedchange
+        self.x = -speedchange
 
     def nudgeLeft(self):
-        twist = Twist()
         self.get_logger().info('nudgeLeft')
-        twist.angular.z = -rotatechange
+        self.z = -rotatechange
 
     def nudgeRight(self):
-        twist = Twist()
         self.get_logger().info('nudgeRight')
-        twist.angular.z = rotatechange
+        self.z = rotatechange
 
     def checkPoint(self):
         self.counter += 1
 
     def stopbot(self):
-        twist = Twist()
         self.get_logger().info('In stopbot')
         # publish to cmd_vel to move TurtleBot
-        twist.linear.x = 0.0
-        twist.angular.z = 0.0
+        self.x = 0.0
+        self.z = 0.0
         # time.sleep(1)
 
     def mover(self):
@@ -101,6 +96,11 @@ class linerMover(Node):
                     self.nudgeLeft()
                 elif ([0, 0] == innerSensor):
                     self.reverse()
+            twist = Twist()
+            twist.linear.x = self.x
+            twist.angular.z = self.z
+            self.publisher_.publish(twist)
+            rclpy.spin_once(self)
 
         except Exception as e:
             print(e)
