@@ -47,7 +47,7 @@ class linerMover(Node):
     def moveStraight(self):
         self.get_logger().info('straight')
         self.twist.linear.x = speedchange
-        self.twist.angular.z = 0
+        self.twist.angular.z = 0.0
 
     def reverse(self):
         self.get_logger().info('reverse')
