@@ -70,7 +70,7 @@ class linerMover(Node):
         self.twist.linear.x = 0.0
         self.twist.angular.z = 0.0
         # time.sleep(1)
-        self.publisher_.publish(twist)
+        self.publisher_.publish(self.twist)
 
     def mover(self):
         try:
