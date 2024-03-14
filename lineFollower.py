@@ -20,14 +20,13 @@ speedchange = 0.05
 stop_distance = 0.25
 
 class linerMover(Node):
-
+    twist = Twist()
     def __init__(self):
         super().__init__('auto_nav')
         #publisher for moving TurtleBot
         self.publisher_ = self.create_publisher(Twist, 'cmd_vel', 10)
         self.get_logger().info('Publisher for Twist')
         self.counter = 0
-        twist = Twist()
 
     def GPIO_setup():
         GPIO.setwarnings(False)
