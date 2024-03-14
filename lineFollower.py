@@ -19,6 +19,14 @@ rotatechange = 0.1
 speedchange = 0.05
 stop_distance = 0.25
 
+def GPIO_setup():
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(LL_PIN, GPIO.IN)
+    GPIO.setup(L_PIN, GPIO.IN)
+    GPIO.setup(R_PIN, GPIO.IN)
+    GPIO.setup(RR_PIN, GPIO.IN)
+
 class linerMover(Node):
     def __init__(self):
         super().__init__('auto_nav')
@@ -27,14 +35,6 @@ class linerMover(Node):
         self.get_logger().info('Publisher for Twist')
         self.counter = 0
         self.twist = Twist()
-
-    def GPIO_setup():
-        GPIO.setwarnings(False)
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(LL_PIN, GPIO.IN)
-        GPIO.setup(L_PIN, GPIO.IN)
-        GPIO.setup(R_PIN, GPIO.IN)
-        GPIO.setup(RR_PIN, GPIO.IN)
 
     def turnRight(self):
         self.get_logger().info('turnRight')
@@ -78,19 +78,19 @@ class linerMover(Node):
                 outerSensor = [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]
                 if ([1, 1] == innerSensor):
                     if ([0, 0] == outerSensor):
-                        moveStraight()
+                        self.moveStraight()
                     elif ([0, 1] == outerSensor):
-                        turnRight()
+                        self.turnRight()
                     elif ([0, 0] == outerSensor):
-                        turnLeft()
+                        self.turnLeft()
                     elif ([1, 1] == outerSensor):
-                        checkPoint()
+                        self.checkPoint()
                 elif ([1, 0] == innerSensor):
-                    nudgeRight()
+                    self.nudgeRight()
                 elif ([0, 1] == innerSensor):
-                    nudgeLeft()
+                    self.nudgeLeft()
                 elif ([0, 0] == innerSensor):
-                    reverse()
+                    self.reverse()
 
         except Exception as e:
             print(e)
