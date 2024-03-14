@@ -18,13 +18,6 @@ RR_PIN = 4
 rotatechange = 0.1
 speedchange = 0.05
 stop_distance = 0.25
-def GPIO_setup():
-    GPIO.setwarnings(False)
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(LL_PIN, GPIO.IN)
-    GPIO.setup(L_PIN, GPIO.IN)
-    GPIO.setup(R_PIN, GPIO.IN)
-    GPIO.setup(RR_PIN, GPIO.IN)
 
 def GPIO_setup():
     GPIO.setwarnings(False)
@@ -43,10 +36,6 @@ class linerMover(Node):
         self.counter = 0
         self.twist = Twist()
 
-<<<<<<< HEAD
-
-=======
->>>>>>> f9c95f6dffe001b4a734fc1bcd72dbf66cc8b6e4
     def turnRight(self):
         self.get_logger().info('turnRight')
         stopbot()
