@@ -75,7 +75,8 @@ class linerMover(Node):
         try:
             while rclpy.ok():
                 innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
-                outerSensor = [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]
+                #outerSensor = [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]
+                outerSensor = [0,0]
                 print("line")
                 print(innerSensor)
                 print(outerSensor)
