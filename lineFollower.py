@@ -33,7 +33,7 @@ class linerMover(Node):
         self.publisher_ = self.create_publisher(Twist, 'cmd_vel', 10)
         self.get_logger().info('Publisher for Twist')
         self.counter = 0
-        twist = Twist()
+        self.twist = Twist()
 
 
     def turnRight(self):
