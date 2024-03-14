@@ -81,6 +81,7 @@ class linerMover(Node):
                 print("line")
                 print(innerSensor)
                 print(outerSensor)
+                print(self.x, self.z)
                 if ([1, 1] == innerSensor):
                     if ([0, 0] == outerSensor):
                         self.moveStraight()
