@@ -76,6 +76,8 @@ class linerMover(Node):
             while rclpy.ok():
                 innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
                 outerSensor = [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]
+                print(innerSensor)
+                print(outerSensor)
                 if ([1, 1] == innerSensor):
                     if ([0, 0] == outerSensor):
                         self.moveStraight()
