@@ -45,9 +45,15 @@ class linerMover(Node):
         stopbot()
 
     def moveStraight(self):
+        twist = Twist()
         self.get_logger().info('straight')
+<<<<<<< HEAD
         self.twist.linear.x = speedchange
         self.twist.angular.z = 0.0
+=======
+        twist.linear.x = speedchange
+        twist.angular.z = 0.0
+>>>>>>> 0118709dfddd7fe87602b6b055e4047ec02f39e4
 
     def reverse(self):
         self.get_logger().info('reverse')
