@@ -13,7 +13,7 @@ import time
 
 LL_PIN = 1
 L_PIN = 26
-R_PIN = 5
+R_PIN = 6 
 RR_PIN = 4
 rotatechange = 0.1
 speedchange = 0.05
@@ -76,6 +76,7 @@ class linerMover(Node):
             while rclpy.ok():
                 innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
                 outerSensor = [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]
+                print("line")
                 print(innerSensor)
                 print(outerSensor)
                 if ([1, 1] == innerSensor):
