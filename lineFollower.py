@@ -1,13 +1,23 @@
 import RPi.GPIO as GPIO
-import time
-import math
 import rclpy
-import rclpy.node import Node
+from rclpy.node import Node
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Twist
+from rclpy.qos import qos_profile_sensor_data
+from sensor_msgs.msg import LaserScan
+from nav_msgs.msg import OccupancyGrid
+import numpy as np
+import math
+import cmath
+import time
 
 LL_PIN = 1
 L_PIN = 2
 R_PIN = 3
 RR_PIN = 4
+rotatechange = 0.1
+speedchange = 0.05
+stop_distance = 0.25
 
 class linerMover(Node):
 
@@ -17,6 +27,7 @@ class linerMover(Node):
         self.publisher_ = self.create_publisher(Twist, 'cmd_vel', 10)
         self.get_logger().info('Publisher for Twist')
         self.counter = 0
+        twist = Twist()
 
     def GPIO_setup():
         GPIO.setwarnings(False)
@@ -27,30 +38,36 @@ class linerMover(Node):
         GPIO.setup(RR_PIN, GPIO.IN)
 
     def turnRight(self):
-        pass
+        self.get_logger().info('turnRight')
+        stopbot()
 
     def turnLeft(self):
-        pass
+        self.get_logger().info('turnLeft')
+        stopbot()
 
     def moveStraight(self):
-        pass
+        self.get_logger().info('straight')
+        twist.linear.x = speedchange
+        twist.angular.z = 0
 
     def reverse(self):
-        pass
+        self.get_logger().info('reverse')
+        twist.linear.x = -speedchange
 
     def nudgeLeft(self):
-        pass
+        self.get_logger().info('nudgeLeft')
+        twist.angular.z = -rotatechange
 
     def nudgeRight(self):
-        pass
+        self.get_logger().info('nudgeRight')
+        twist.angular.z = rotatechange
 
     def checkPoint(self):
-        pass
+        self.counter += 1
 
     def stopbot(self):
         self.get_logger().info('In stopbot')
         # publish to cmd_vel to move TurtleBot
-        twist = Twist()
         twist.linear.x = 0.0
         twist.angular.z = 0.0
         # time.sleep(1)
@@ -73,9 +90,9 @@ class linerMover(Node):
                         checkPoint()
                 elif ([1, 0] == innerSensor):
                     nudgeRight()
-                elif ([0, 1]) == innerSensor):
+                elif ([0, 1] == innerSensor):
                     nudgeLeft()
-                elif ([0, 0]) == innerSensor):
+                elif ([0, 0] == innerSensor):
                     reverse()
 
         except Exception as e:
@@ -88,10 +105,9 @@ class linerMover(Node):
 
 def main(args = None):
     rclpy.init(args=args)
-
+    GPIO_setup()
     nav = linerMover()
     nav.mover()
-    GPIO_setup()
 
     nav.destroy_node()
     rclpy.shutdown()
