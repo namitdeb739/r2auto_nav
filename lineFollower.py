@@ -16,7 +16,7 @@ L_PIN = 26
 R_PIN = 6 
 RR_PIN = 4
 rotatechange = 0.1
-speedchange = 0.05
+speedchange = 0.1
 stop_distance = 0.25
 
 def GPIO_setup():
