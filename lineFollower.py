@@ -12,8 +12,8 @@ import cmath
 import time
 
 LL_PIN = 1
-L_PIN = 2
-R_PIN = 3
+L_PIN = 26
+R_PIN = 5
 RR_PIN = 4
 rotatechange = 0.1
 speedchange = 0.05
