@@ -3,6 +3,7 @@ from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid, Odometry
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import LaserScan
+from rclpy.qos import qos_profile_sensor_data
 import numpy as np
 import heapq
 import math
@@ -18,7 +19,7 @@ with open(
         'r'
         ) as file:
     params = yaml.load(file, Loader=yaml.FullLoader)
- 
+
 lookahead_distance = params["lookahead_distance"]
 speed = params["speed"]
 expansion_size = params["expansion_size"]
@@ -326,13 +327,14 @@ def exploration(data, width, height, resolution, column, row, originX,
 def localControl(scan):
     v = None
     w = None
-    for i in range(60):
+    scan_range = len(scan)
+    for i in range(int((1 / 6) * scan_range)):
         if scan[i] < robot_security_radius:
             v = 0.2
-            w = -math.pi / 4
+            w = - math.pi / 4
             break
     if v is None:
-        for i in range(300, 360):
+        for i in range(int((5 / 6) * scan_range), int(scan_range)):
             if scan[i] < robot_security_radius:
                 v = 0.2
                 w = math.pi / 4
@@ -343,30 +345,42 @@ def localControl(scan):
 class NavigationControl(Node):
     def __init__(self):
         super().__init__('Exploration')
-        self.subscription = self.create_subscription(OccupancyGrid, 'map',
-                                                     self.map_callback, 10)
-        self.subscription = self.create_subscription(Odometry, 'odom',
-                                                     self.odom_callback, 10)
-        self.subscription = self.create_subscription(LaserScan, 'scan',
-                                                     self.scan_callback, 10)
+        self.subscription = self.create_subscription(
+                OccupancyGrid, 'map', self.map_callback,
+                qos_profile_sensor_data)
+        self.get_logger().info('Created map subscriber')
+
+        self.subscription = self.create_subscription(
+                Odometry, 'odom', self.odom_callback, 10)
+        self.get_logger().info('Created odom subscriber')
+
+        self.subscription = self.create_subscription(
+                LaserScan, 'scan', self.scan_callback,
+                qos_profile_sensor_data)
+        self.get_logger().info('Created scan subscriber')
+
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
-        print("[INFO] DISCOVERY MODE ACTIVE")
+        self.get_logger().info("DISCOVERY MODE ACTIVE")
+
         self.discovery = True
         # Runs the discovery function as a thread.
         threading.Thread(target=self.exp).start()
 
     def exp(self):
         twist = Twist()
+        self.get_logger().info("Twist: %s" % (twist))
         while True:  # Wait until sensor data arrives.
-            if (not hasattr(self, 'map_data')) or \
-               (not hasattr(self, 'odom_data')) or \
-               (not hasattr(self, 'scan_data')):
+            has_map_data = hasattr(self, 'map_data')
+            has_odom_data = hasattr(self, 'odom_data')
+            has_scan_data = hasattr(self, 'scan_data')
+            if not has_map_data or not has_odom_data or not has_scan_data:
                 time.sleep(0.1)
                 continue
             if self.discovery is True:
                 if isinstance(path_global, int) and path_global == 0:
                     column = int((self.x - self.originX) / self.resolution)
                     row = int((self.y - self.originY) / self.resolution)
+                    self.get_logger().info("Starting exploration")
                     exploration(self.data, self.width, self.height,
                                 self.resolution, column, row,
                                 self.originX, self.originY)
@@ -374,7 +388,7 @@ class NavigationControl(Node):
                 else:
                     self.path = path_global
                 if isinstance(self.path, int) and self.path == -1:
-                    print("[INFO] EXPLORATION COMPLETE")
+                    self.get_loger().info("EXPLORATION COMPLETE")
                     sys.exit()
                 self.c = int((self.path[-1][0] - self.originX)
                              / self.resolution)
@@ -382,7 +396,7 @@ class NavigationControl(Node):
                              / self.resolution)
                 self.discovery = False
                 self.i = 0
-                print("[INFO] NEW TARGET SET")
+                self.get_logger().info("NEW TARGET SET")
                 t = path_length(self.path) / speed
                 # According to x = v * t, 0.2seconds is subtracted
                 # from the calculated time. After t time, the
@@ -404,7 +418,7 @@ class NavigationControl(Node):
                     v = 0.0
                     w = 0.0
                     self.discovery = True
-                    print("[INFO] TARGET REACHED")
+                    self.get_logger().info("TARGET REACHED")
                     self.t.join()  # Wait until the thread finishes.
                 twist.linear.x = v
                 twist.angular.z = w
@@ -415,12 +429,16 @@ class NavigationControl(Node):
     def target_callback(self):
         exploration(self.data, self.width, self.height, self.resolution,
                     self.c, self.r, self.originX, self.originY)
+        self.get_logger().info("Data: %s\nHeight, Width: %s, %s"
+                               % (self.data, self.height, self.width))
 
     def scan_callback(self, msg):
+        self.get_logger().info(msg)
         self.scan_data = msg
         self.scan = msg.ranges
 
     def map_callback(self, msg):
+        self.get_logger().info(msg)
         self.map_data = msg
         self.resolution = self.map_data.info.resolution
         self.originX = self.map_data.info.origin.position.x
@@ -428,6 +446,11 @@ class NavigationControl(Node):
         self.width = self.map_data.info.width
         self.height = self.map_data.info.height
         self.data = self.map_data.data
+        self.get_logger().info("Data: %s" % (self.data))
+        self.get_logger().info("Origin: (%s, %s)"
+                               % (self.originX, self.originY))
+        self.get_logger().info("Map height: %s, Map width: %s, Reso: %s"
+                               % (self.height, self.width, self.resolution))
 
     def odom_callback(self, msg):
         self.odom_data = msg
