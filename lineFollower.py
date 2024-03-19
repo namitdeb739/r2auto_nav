@@ -29,13 +29,13 @@ def GPIO_setup():
 
 class linerMover(Node):
     def __init__(self):
-        super().__init__('auto_nav')
+        super().__init__('nav')
         #publisher for moving TurtleBot
         self.publisher_ = self.create_publisher(Twist, 'cmd_vel', 10)
         self.get_logger().info('Publisher for Twist')
         self.counter = 0
-        self.x = 0
-        self.z = 0
+        self.x = 1.0
+        self.z = 1.0
 
     def turnRight(self):
         self.get_logger().info('turnRight')
@@ -74,14 +74,14 @@ class linerMover(Node):
 
     def mover(self):
         try:
-            while rclpy.ok():
+            while 0:
+            #while rclpy.ok():
                 innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
                 #outerSensor = [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]
                 outerSensor = [0,0]
                 print("line")
                 print(innerSensor)
                 print(outerSensor)
-                print(self.x, self.z)
                 if ([1, 1] == innerSensor):
                     if ([0, 0] == outerSensor):
                         self.moveStraight()
@@ -98,9 +98,10 @@ class linerMover(Node):
                 elif ([0, 0] == innerSensor):
                     self.reverse()
             twist = Twist()
-            twist.linear.x = self.x
-            twist.angular.z = self.z
-            time.sleep(0.1)
+            twist.linear.x += 2.0
+            twist.angular.z += 0.5
+            time.sleep(1)
+            print(twist.linear.x, twist.angular.z)
             self.publisher_.publish(twist)
             rclpy.spin_once(self)
 
@@ -117,7 +118,7 @@ def main(args = None):
     GPIO_setup()
     nav = linerMover()
     nav.mover()
-
+    print("closing")
     nav.destroy_node()
     rclpy.shutdown()
     GPIO.cleanup()
