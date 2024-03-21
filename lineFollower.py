@@ -15,8 +15,8 @@ LL_PIN = 1
 L_PIN = 26
 R_PIN = 6 
 RR_PIN = 4
-rotatechange = 0.1
-speedchange = 0.1
+rotatechange = 2.0 #max 2.8
+speedchange = 0.1 #max 0.2
 stop_distance = 0.25
 
 def GPIO_setup():
@@ -39,20 +39,21 @@ class linerMover(Node):
 
     def turnRight(self):
         self.get_logger().info('turnRight')
-        stopbot()
+        self.stopbot()
 
     def turnLeft(self):
         self.get_logger().info('turnLeft')
-        stopbot()
+        self.stopbot()
 
     def moveStraight(self):
         self.get_logger().info('straight')
-        self.x = speedchange
+        self.x = -speedchange
         self.z = 0.0
 
     def reverse(self):
         self.get_logger().info('reverse')
-        self.x = -speedchange
+        self.x = 0.01
+        self.z = 0.0
 
     def nudgeLeft(self):
         self.get_logger().info('nudgeLeft')
@@ -74,12 +75,10 @@ class linerMover(Node):
 
     def mover(self):
         try:
-            while 0:
-            #while rclpy.ok():
+            while True:
                 innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
-                #outerSensor = [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]
-                outerSensor = [0,0]
-                print("line")
+                outerSensor = [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]
+                print("----------------")
                 print(innerSensor)
                 print(outerSensor)
                 if ([1, 1] == innerSensor):
@@ -91,19 +90,18 @@ class linerMover(Node):
                         self.turnLeft()
                     elif ([1, 1] == outerSensor):
                         self.checkPoint()
-                elif ([1, 0] == innerSensor):
-                    self.nudgeRight()
                 elif ([0, 1] == innerSensor):
+                    self.nudgeRight()
+                elif ([1, 0] == innerSensor):
                     self.nudgeLeft()
                 elif ([0, 0] == innerSensor):
                     self.reverse()
-            twist = Twist()
-            twist.linear.x += 2.0
-            twist.angular.z += 0.5
-            time.sleep(1)
-            print(twist.linear.x, twist.angular.z)
-            self.publisher_.publish(twist)
-            rclpy.spin_once(self)
+                twist = Twist()
+                # twist.linear.x = self.x
+                # twist.angular.z = self.z
+                print(self.x, self.z)
+                print(twist.linear.x, twist.angular.z)
+                self.publisher_.publish(twist)
 
         except Exception as e:
             print(e)
