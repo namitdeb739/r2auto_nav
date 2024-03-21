@@ -15,8 +15,8 @@ LL_PIN = 1
 L_PIN = 26
 R_PIN = 6 
 RR_PIN = 4
-rotatechange = 2.0 #max 2.8
-speedchange = 0.1 #max 0.2
+rotatechange = 2.7 #max 2.8
+speedchange = 0.2 #max 0.22
 stop_distance = 0.25
 
 def GPIO_setup():
@@ -34,36 +34,43 @@ class linerMover(Node):
         self.publisher_ = self.create_publisher(Twist, 'cmd_vel', 10)
         self.get_logger().info('Publisher for Twist')
         self.counter = 0
-        self.x = 1.0
-        self.z = 1.0
+        self.x = 0.0
+        self.z = 0.0
 
     def turnRight(self):
         self.get_logger().info('turnRight')
-        self.stopbot()
+        self.z = rotatechange
+        self.x = speedchange/4
 
     def turnLeft(self):
         self.get_logger().info('turnLeft')
-        self.stopbot()
+        self.z = -rotatechange
+        self.x = speedchange/4
 
     def moveStraight(self):
         self.get_logger().info('straight')
-        self.x = -speedchange
+        self.x = 0.0
         self.z = 0.0
+        print(f"self.x: {self.x}, self.z: {self.z}")
+
 
     def reverse(self):
         self.get_logger().info('reverse')
-        self.x = 0.01
+        self.x = -0.01
         self.z = 0.0
 
     def nudgeLeft(self):
         self.get_logger().info('nudgeLeft')
-        self.z = -rotatechange
+        self.x = speedchange/2
+        self.z = -rotatechange/2
 
     def nudgeRight(self):
         self.get_logger().info('nudgeRight')
-        self.z = rotatechange
+        self.x = speedchange/2
+        self.z = rotatechange/2
 
     def checkPoint(self):
+        self.get_logger().info('straight')
         self.counter += 1
 
     def stopbot(self):
@@ -97,10 +104,10 @@ class linerMover(Node):
                 elif ([0, 0] == innerSensor):
                     self.reverse()
                 twist = Twist()
-                # twist.linear.x = self.x
-                # twist.angular.z = self.z
-                print(self.x, self.z)
-                print(twist.linear.x, twist.angular.z)
+                twist.linear.x = self.x
+                twist.angular.z = self.z
+                print(f"self.x: {self.x}, self.z: {self.z}")
+                print(f"linear.x: {twist.linear.x}, angular.z{twist.angular.z}")
                 self.publisher_.publish(twist)
 
         except Exception as e:
