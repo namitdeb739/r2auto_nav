@@ -48,11 +48,10 @@ class linerMover(Node):
         self.x = speedchange/4
 
     def moveStraight(self):
-        self.get_logger().info('straight')
+        self.get_logger().info('stght')
         self.x = 0.0
         self.z = 0.0
         print(f"self.x: {self.x}, self.z: {self.z}")
-
 
     def reverse(self):
         self.get_logger().info('reverse')
