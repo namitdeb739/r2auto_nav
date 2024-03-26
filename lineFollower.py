@@ -18,6 +18,7 @@ RR_PIN = 4
 rotatechange = 2.7 #max 2.8
 speedchange = 0.2 #max 0.22
 stop_distance = 0.25
+firstCheck = True
 
 def GPIO_setup():
     GPIO.setwarnings(False)
@@ -71,7 +72,12 @@ class linerMover(Node):
 
     def checkPoint(self):
         self.get_logger().info('straight')
-        self.counter += 1
+        if firstCheck or (time.time() - timed > 10):
+            timed = time.time()
+            firstCheck = False
+            self.counter += 1
+            self.get_logger().info('Checkpoint: ')
+            self.get_logger().info(self.counter)
 
     def stopbot(self):
         self.get_logger().info('In stopbot')
