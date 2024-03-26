@@ -147,6 +147,7 @@ def pure_pursuit(current_x, current_y, current_heading, path, index):
         distance = math.hypot(current_x - x, current_y - y)
         if lookahead_distance < distance:
             closest_point = (x, y)
+            print("Closest point: (%s, %s): " % (x, y))
             index = i
             break
     if closest_point is not None:
@@ -217,9 +218,12 @@ def dfs(matrix, i, j, group, groups):
 
 
 def f_groups(groups):
+    # print("Groups: %s" % (groups))
     sorted_groups = sorted(groups.items(), key=lambda x: len(x[1]),
                            reverse=True)
-    top_five_groups = [g for g in sorted_groups[:5] if len(g[1]) > 2]
+    # print("Sorted groups: %s" % (sorted_groups))
+    top_five_groups = [g for g in sorted_groups[:5] if len(g[1]) >= 3]
+    # print("T5 groups: %s" % (top_five_groups))
     return top_five_groups
 
 
@@ -230,6 +234,7 @@ def calculate_centroid(x_coords, y_coords):
     mean_x = sum_x / n
     mean_y = sum_y / n
     centroid = (int(mean_x), int(mean_y))
+    print("Centroid: (%s, %s)" % (int(mean_x), int(mean_y)))
     return centroid
 
 
@@ -242,6 +247,7 @@ def find_closest_group(matrix, groups, current, resolution, originX, originY):
     for i in range(len(groups)):
         middle = calculate_centroid([p[0] for p in groups[i][1]],
                                     [p[1] for p in groups[i][1]])
+        # print("Middle: %s" % (middle))
         path = astar(matrix, current, middle)
         path = [(p[1] * resolution + originX, p[0] * resolution + originY)
                 for p in path]
@@ -300,7 +306,6 @@ def costmap(data, width, height, resolution):
 
 def exploration(data, width, height, resolution, column, row, originX,
                 originY):
-    # self.get_logger().info("EXPLORING")
     global path_global  # Global variable
     data = costmap(data, width, height, resolution)  # Expand the barriers
     data[row][column] = 0  # Robot current location
@@ -308,8 +313,10 @@ def exploration(data, width, height, resolution, column, row, originX,
     # those with a score of 100 are a definite obstacle.
     data = frontier_B(data)  # Find node points
     data, groups = assign_groups(data)  # Group node points
+    # print("\nData: \n%s\nGroups: %s\n" % (data, groups))
     groups = f_groups(groups)  # Sort g roups from smallest to largest \
     # and take the top 5
+    print(("Groups: %s\n" % (groups)[:20]))
     if len(groups) == 0:  # If there is no group, discovery is complete
         path = -1
     else:  # If there is a group, find the closest group
@@ -317,11 +324,14 @@ def exploration(data, width, height, resolution, column, row, originX,
         # mark it unvisitable. 0 = can go, 1 = cannot go.
         path = find_closest_group(data, groups, (row, column), resolution,
                                   originX, originY)  # Find closest group
+        print("Path: %s" % (path)[:40])
         if path is not None:  # If there is a path, fix it with B-spline
             path = bspline_planning(path, len(path) * 5)
+            print("Path: %s" % (path)[:40])
         else:
             path = -1
     path_global = path
+    # print("Path found") if isinstance(path_global, int) else print("Path not found")
     return
 
 
@@ -387,26 +397,32 @@ class NavigationControl(Node):
                 if isinstance(path_global, int) and path_global == 0:
                     column = int((self.x - self.originX) / self.resolution)
                     row = int((self.y - self.originY) / self.resolution)
-                    self.get_logger().info("STARTING EXPLORATION")
-                    self.get_logger().info("(R, C): (%s, %s)" % (row, column))
+                    self.get_logger().info("Map size (R, C): (%s, %s)" % (row, column))
                     exploration(self.data, self.width, self.height,
                                 self.resolution, column, row,
                                 self.originX, self.originY)
                     self.path = path_global
+                    # self.get_logger().info("Self path: %s" % (self.path))
                 else:
                     self.path = path_global
+                    # self.get_logger().info("Self path: %s" % (self.path))
                 if isinstance(self.path, int) and self.path == -1:
                     self.get_logger().info("EXPLORATION COMPLETE")
-                    sys.exit()
+                    twist.linear.x = 0
+                    twist.angular.z = 0
+                    self.publisher.publish(twist)
+                    sys.exit(0)
                 self.c = int((self.path[-1][0] - self.originX)
                              / self.resolution)
                 self.r = int((self.path[-1][1] - self.originY)
                              / self.resolution)
+                print("Self (r, c): (%s, %s)" % (self.r, self.c))
                 self.discovery = False
                 self.i = 0
                 self.get_logger().info("NEW TARGET SET")
                 t = path_length(self.path) / speed
-                self.get_logger().info("Time: %s" & (t))
+                self.get_logger().info("Path length: %s, Time: %s" %
+                        (path_length(self.path), t))
                 # According to x = v * t, 0.2seconds is subtracted
                 # from the calculated time. After t time, the
                 # discovery function is run.
@@ -432,7 +448,7 @@ class NavigationControl(Node):
                 twist.linear.x = v
                 twist.angular.z = w
                 self.publisher.publish(twist)
-                time.sleep(0.1)
+                time.sleep(0.5)
             # Route tracking block ends.
 
     def target_callback(self):
@@ -477,6 +493,7 @@ def main(args=None):
     rclpy.spin(navigation_control)
     navigation_control.destroy_node()
     rclpy.shutdown()
+    sys.exit(0)
 
 
 if __name__ == '__main__':
