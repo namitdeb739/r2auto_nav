@@ -194,8 +194,10 @@ def dfs(matrix, i, j, group, groups):
     return group + 1
 
 def fGroups(groups):
+    print(groups)
     sorted_groups = sorted(groups.items(), key=lambda x: len(x[1]), reverse=True)
-    top_five_groups = [g for g in sorted_groups[:5] if len(g[1]) > 2]    
+    print(sorted_groups)
+    top_five_groups = [g for g in sorted_groups[:5] if len(g[1]) > 1]    
     return top_five_groups
 
 def calculate_centroid(x_coords, y_coords):
@@ -341,7 +343,7 @@ class navigationControl(Node):
         self.subscription
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
         print("[INFORMATION] CUTTING MODE ACTIVE")
-        self.kesif = True
+        self.discovery = True
         threading.Thread(target=self.exp).start() #Extract function as thread calistirir.
         
     def exp(self):
@@ -349,10 +351,8 @@ class navigationControl(Node):
         while True: #Wait until sensor data arrives.
             if not hasattr(self,'map_data') or not hasattr(self,'odom_data') or not hasattr(self,'scan_data'):
                 time.sleep(0.5)
-                print("scan:",hasattr(self,'scan_data'),"odom:",hasattr(self,'odom_data'),"map:",hasattr(self,'map_data'))
-                print(self.kesif)
                 continue
-            if self.kesif == True:
+            if self.discovery == True:
                 if isinstance(pathGlobal, int) and pathGlobal == 0:
                     column = int((self.x - self.originX)/self.resolution)
                     row = int((self.y- self.originY)/self.resolution)
@@ -365,7 +365,7 @@ class navigationControl(Node):
                     sys.exit()
                 self.c = int((self.path[-1][0] - self.originX)/self.resolution) 
                 self.r = int((self.path[-1][1] - self.originY)/self.resolution) 
-                self.kesif = False
+                self.discovery = False
                 self.i = 0
                 print("[INFORMATION] NEW TARGET HAS BEEN DETERMINED")
                 t = pathLength(self.path)/speed
@@ -385,7 +385,7 @@ class navigationControl(Node):
                 if(abs(self.x - self.path[-1][0]) < target_error and abs(self.y - self.path[-1][1]) < target_error):
                     v = 0.0
                     w = 0.0
-                    self.kesif = True
+                    self.discovery = True
                     print("[INFORMATION] GOAL ACHIEVED")
                     self.t.join() #Wait until the thread finishes.
                 twist.linear.x = v
@@ -402,7 +402,6 @@ class navigationControl(Node):
         self.scan = msg.ranges
 
     def map_callback(self,msg):
-        print("Hello")
         self.map_data = msg
         self.resolution = self.map_data.info.resolution
         self.originX = self.map_data.info.origin.position.x
@@ -410,7 +409,6 @@ class navigationControl(Node):
         self.width = self.map_data.info.width
         self.height = self.map_data.info.height
         self.data = self.map_data.data
-        #print(self.originX,self.originY)
 
     def odom_callback(self,msg):
         self.odom_data = msg
