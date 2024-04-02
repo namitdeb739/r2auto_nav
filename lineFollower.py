@@ -15,8 +15,8 @@ LL_PIN = 19
 L_PIN = 6
 R_PIN = 13
 RR_PIN = 26
-rotatechange = 2.7 #max 2.8
-speedchange = -0.2 #max 0.22
+rotatechange = 2.75/2 #max 2.8
+speedchange = -0.21/2 #max 0.22
 stop_distance = 0.25
 firstCheck = True
 
@@ -42,13 +42,11 @@ class linerMover(Node):
         self.get_logger().info('turnRight')
         self.z = -rotatechange
         self.x = speedchange
-        time.sleep(0.8)
 
     def turnLeft(self):
         self.get_logger().info('turnLeft')
         self.z = rotatechange
         self.x = speedchange
-        time.sleep(0.8)
 
     def moveStraight(self):
         self.get_logger().info('stght')
