@@ -15,8 +15,8 @@ LL_PIN = 19
 L_PIN = 6
 R_PIN = 13
 RR_PIN = 26
-rotatechange = 2.75/2 #max 2.8
-speedchange = -0.21/2 #max 0.22
+rotatechange = 2.75/4 #max 2.8
+speedchange = -0.10 #max 0.22
 stop_distance = 0.25
 firstCheck = True
 reverse = False
@@ -39,15 +39,37 @@ class linerMover(Node):
         self.x = 0.0
         self.z = 0.0
 
+    def publish(self):
+        twist = Twist()
+        twist.linear.x = self.x
+        twist.angular.z = self.z
+        print(f"{twist.linear.x}, {twist.angular.z}")
+        self.publisher_.publish(twist)
+        print(f"{twist.linear.x}, {twist.angular.z}")
+
     def turnRight(self):
         self.get_logger().info('turnRight')
-        self.z = -rotatechange
-        self.x = speedchange
+        while GPIO.input(RR_PIN):
+            self.x = 0.0
+            self.z = -rotatechange
+            self.publish()
+        while not (GPIO.input(L_PIN) and GPIO.input(R_PIN)):
+            self.x = 0.0
+            self.z = -rotatechange
+            self.publish()
 
     def turnLeft(self):
         self.get_logger().info('turnLeft')
         self.z = rotatechange
-        self.x = speedchange
+        self.x = speedchange/4
+        while GPIO.input(LL_PIN):
+            self.x = 0.0
+            self.z = rotatechange
+            self.publish()
+        while not (GPIO.input(L_PIN) and GPIO.input(R_PIN)):
+            self.x = 0.0
+            self.z = rotatechange
+            self.publish()
 
     def moveStraight(self):
         self.get_logger().info('stght')
@@ -59,16 +81,33 @@ class linerMover(Node):
         self.get_logger().info('reverse')
         self.x = 0.01
         self.z = 0.0
+        self.publish()
+        nudge = 0
+        first = True
+        while ((not GPIO.input(L_PIN)) and (not GPIO.input(R_PIN))):
+            if (first and GPIO.input(L_PIN)):
+                first = False
+                nudge = 0 #go left
+            if (first and GPIO.input(R_PIN)):
+                first = False
+                nudge = 1 #go right
+        self.x = 0.0
+        while (GPIO.input(LL_PIN) or GPIO.input(RR_PIN)):
+            if (nudge == 0):
+                self.z = rotatechange #nudgeleft
+            else:
+                self.z =  -rotatechange #nudgeRight
+            self.publish()
 
     def nudgeLeft(self):
         self.get_logger().info('nudgeLeft')
-        self.x = speedchange/2
-        self.z = rotatechange/6
+        self.x = speedchange/5
+        self.z = rotatechange/5
 
     def nudgeRight(self):
         self.get_logger().info('nudgeRight')
-        self.x = speedchange/2
-        self.z = -rotatechange/6
+        self.x = speedchange/5
+        self.z = -rotatechange/5
 
     def checkPoint(self):
         global firstCheck, timed
@@ -89,6 +128,7 @@ class linerMover(Node):
         # time.sleep(1)
 
     def mover(self):
+        global reverse
         try:
             while True:
                 innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
@@ -102,34 +142,23 @@ class linerMover(Node):
                         if (reverse):
                             reverse = False
                     elif ([0, 1] == outerSensor):
-                        if (reverse):
-                            self.turnLeft()
                         self.turnRight()
                         pass
                     elif ([1, 0] == outerSensor):
-                        if (reverse):
-                            self.turnRight()
                         self.turnLeft()
                         pass
                     elif ([1, 1] == outerSensor):
                         self.checkPoint()
                         pass
                 elif ([0, 1] == innerSensor):
-                    if (reverse):
-                        self.nudgeLeft()
                     self.nudgeRight()
                 elif ([1, 0] == innerSensor):
-                    if (reverse):
-                        self.nudgeRight()
                     self.nudgeLeft()
                 elif ([0, 0] == innerSensor):
                     self.reverse()
-                twist = Twist()
-                twist.linear.x = self.x
-                twist.angular.z = self.z
+                self.publish()
                 print(f"self.x: {self.x}, self.z: {self.z}")
-                print(f"linear.x: {twist.linear.x}, angular.z{twist.angular.z}")
-                self.publisher_.publish(twist)
+                
 
         except Exception as e:
             print(e)
