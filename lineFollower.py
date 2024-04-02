@@ -19,6 +19,7 @@ rotatechange = 2.75/2 #max 2.8
 speedchange = -0.21/2 #max 0.22
 stop_distance = 0.25
 firstCheck = True
+reverse = False
 
 def GPIO_setup():
     GPIO.setwarnings(False)
@@ -98,18 +99,28 @@ class linerMover(Node):
                 if ([1, 1] == innerSensor):
                     if ([0, 0] == outerSensor):
                         self.moveStraight()
+                        if (reverse):
+                            reverse = False
                     elif ([0, 1] == outerSensor):
+                        if (reverse):
+                            self.turnLeft()
                         self.turnRight()
                         pass
                     elif ([1, 0] == outerSensor):
+                        if (reverse):
+                            self.turnRight()
                         self.turnLeft()
                         pass
                     elif ([1, 1] == outerSensor):
                         self.checkPoint()
                         pass
                 elif ([0, 1] == innerSensor):
+                    if (reverse):
+                        self.nudgeLeft()
                     self.nudgeRight()
                 elif ([1, 0] == innerSensor):
+                    if (reverse):
+                        self.nudgeRight()
                     self.nudgeLeft()
                 elif ([0, 0] == innerSensor):
                     self.reverse()
