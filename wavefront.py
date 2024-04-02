@@ -3,12 +3,13 @@ import time
 
 from action_msgs.msg import GoalStatus
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
+from sensor_msgs.msg import LaserScan
 from nav2_msgs.action import FollowWaypoints
 from nav2_msgs.srv import ManageLifecycleNodes
 from nav2_msgs.srv import GetCostmap
+from nav2_msgs.msg import Costmap
 from nav_msgs.msg import OccupancyGrid
 from nav_msgs.msg import Odometry
-# from nav2_msgs.msg import Costmap
 
 import rclpy
 from rclpy.action import ActionClient
@@ -16,6 +17,7 @@ from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy, QoSHistoryPolicy, \
         QoSReliabilityPolicy
 from rclpy.qos import QoSProfile
+from rclpy.qos import qos_profile_sensor_data
 
 from enum import Enum
 
@@ -286,10 +288,11 @@ class WaypointFollowerTest(Node):
             self.create_publisher(PoseWithCovarianceStamped,
                                   'initialpose', 10)
 
-        self.costmapClient = \
-            self.create_client(GetCostmap, '/global_costmap/get_costmap')
-        while not self.costmapClient.wait_for_service(timeout_sec=1.0):
-            self.info_msg('service not available, waiting again...')
+            #self.costmapClient = \
+                    #self.create_client(GetCostmap, '/global_costmap/get_costmap')
+        #while not self.costmapClient.wait_for_service(timeout_sec=1.0):
+            # self.info_msg('service not available, waiting again...')
+            #print("C")
         self.initial_pose_received = False
         self.goal_handle = None
 
@@ -304,21 +307,31 @@ class WaypointFollowerTest(Node):
             self.create_subscription(Odometry, '/odom', self.poseCallback,
                                      pose_qos)
 
-        # self.costmapSub = \
-        #        self.create_subscription(
-        #                Costmap(),
-        #                '/global_costmap/costmap_raw',
-        #                self.costmapCallback,
-        #                pose_qos)
+        self.costmapSub = \
+               self.create_subscription(
+                       Costmap(),
+                       '/global_costmap/costmap_raw',
+                       self.costmapCallback,
+                       pose_qos)
+
         self.costmapSub = \
             self.create_subscription(OccupancyGrid(), '/map',
                                      self.occupancyGridCallback, pose_qos)
+
+        self.subscription = \
+                self.create_subscription(LaserScan, 'scan', self.scanCallback,
+                                         qos_profile_sensor_data)
+        
         self.costmap = None
 
         self.get_logger().info('Running Waypoint Test')
 
     def occupancyGridCallback(self, msg):
         self.costmap = OccupancyGrid2d(msg)
+
+    def scanCallback(self, msg):
+        self.scan_data = msg
+        self.scan = msg.ranges
 
     def moveToFrontiers(self):
         frontiers = getFrontier(self.currentPose, self.costmap,
@@ -478,9 +491,9 @@ class WaypointFollowerTest(Node):
         mgr_client = \
             self.create_client(ManageLifecycleNodes, transition_service)
         while not mgr_client.wait_for_service(timeout_sec=1.0):
-            self.info_msg(transition_service +
-                          ' service not available, waiting...')
-
+            # self.info_msg(transition_service +
+            #               ' service not available, waiting...')
+            print("A")
         req = ManageLifecycleNodes.Request()
         req.command = ManageLifecycleNodes.Request().SHUTDOWN
         future = mgr_client.call_async(req)
@@ -497,9 +510,9 @@ class WaypointFollowerTest(Node):
         mgr_client = self.create_client(ManageLifecycleNodes,
                                         transition_service)
         while not mgr_client.wait_for_service(timeout_sec=1.0):
-            self.info_msg(transition_service +
-                          ' service not available, waiting...')
-
+            # self.info_msg(transition_service +
+            #               ' service not available, waiting...')
+            print("B")
         req = ManageLifecycleNodes.Request()
         req.command = ManageLifecycleNodes.Request().SHUTDOWN
         future = mgr_client.call_async(req)
