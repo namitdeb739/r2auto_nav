@@ -11,12 +11,12 @@ import math
 import cmath
 import time
 
-LL_PIN = 1
-L_PIN = 26
-R_PIN = 6 
-RR_PIN = 4
+LL_PIN = 19
+L_PIN = 6
+R_PIN = 13
+RR_PIN = 26
 rotatechange = 2.7 #max 2.8
-speedchange = 0.2 #max 0.22
+speedchange = -0.2 #max 0.22
 stop_distance = 0.25
 firstCheck = True
 
@@ -40,43 +40,47 @@ class linerMover(Node):
 
     def turnRight(self):
         self.get_logger().info('turnRight')
-        self.z = rotatechange
-        self.x = speedchange/4
+        self.z = -rotatechange
+        self.x = speedchange
+        time.sleep(0.8)
 
     def turnLeft(self):
         self.get_logger().info('turnLeft')
-        self.z = -rotatechange
-        self.x = speedchange/4
+        self.z = rotatechange
+        self.x = speedchange
+        time.sleep(0.8)
 
     def moveStraight(self):
         self.get_logger().info('stght')
-        self.x = 0.0
+        self.x = speedchange
         self.z = 0.0
         print(f"self.x: {self.x}, self.z: {self.z}")
 
     def reverse(self):
         self.get_logger().info('reverse')
-        self.x = -0.01
+        self.x = 0.01
         self.z = 0.0
 
     def nudgeLeft(self):
         self.get_logger().info('nudgeLeft')
         self.x = speedchange/2
-        self.z = -rotatechange/2
+        self.z = rotatechange/6
 
     def nudgeRight(self):
         self.get_logger().info('nudgeRight')
         self.x = speedchange/2
-        self.z = rotatechange/2
+        self.z = -rotatechange/6
 
     def checkPoint(self):
-        self.get_logger().info('straight')
+        global firstCheck, timed
+        self.get_logger().info('check')
         if firstCheck or (time.time() - timed > 10):
             timed = time.time()
             firstCheck = False
             self.counter += 1
             self.get_logger().info('Checkpoint: ')
-            self.get_logger().info(self.counter)
+            self.get_logger().info(str(self.counter))
+
 
     def stopbot(self):
         self.get_logger().info('In stopbot')
@@ -91,17 +95,20 @@ class linerMover(Node):
                 innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
                 outerSensor = [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]
                 print("----------------")
-                print(innerSensor)
-                print(outerSensor)
+                print(f"inner: {innerSensor}")
+                print(f"outer: {outerSensor}")
                 if ([1, 1] == innerSensor):
                     if ([0, 0] == outerSensor):
                         self.moveStraight()
                     elif ([0, 1] == outerSensor):
                         self.turnRight()
-                    elif ([0, 0] == outerSensor):
+                        pass
+                    elif ([1, 0] == outerSensor):
                         self.turnLeft()
+                        pass
                     elif ([1, 1] == outerSensor):
                         self.checkPoint()
+                        pass
                 elif ([0, 1] == innerSensor):
                     self.nudgeRight()
                 elif ([1, 0] == innerSensor):
