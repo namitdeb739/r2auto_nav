@@ -23,14 +23,3 @@ for i in range(5):
 
 p.stop()
 GPIO.cleanup()
-# Example usage:
-<<<<<<< HEAD
-if __name__ == "__main__":
-    PAYLOAD_PIN = 18  # Change this to your desired GPIO pin
-    control_servo(PAYLOAD_PIN)
-=======
-if name == "main":
-    PAYLOAD_PIN = 18  # Change this to your desired GPIO pin
-    control_servo(PAYLOAD_PIN)
->>>>>>> 5c3de9cc1c28110ae95dd7a2051ef96fb29ebbac
->>>>>>> 0c9c1ae38e6c7b3f44765b6ec520f7f2bd3aa061
