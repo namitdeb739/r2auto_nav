@@ -43,4 +43,4 @@ if __name__ == "__main__":
 if name == "main":
     PAYLOAD_PIN = 18  # Change this to your desired GPIO pin
     control_servo(PAYLOAD_PIN)
->>>>>>> 5c3de9cc1c28110ae95dd7a2051ef96fb29ebbac
+>>>>>> 5c3de9cc1c28110ae95dd7a2051ef96fb29ebbac
