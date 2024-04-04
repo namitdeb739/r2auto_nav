@@ -43,14 +43,13 @@ class linerMover(Node):
         twist = Twist()
         twist.linear.x = self.x
         twist.angular.z = self.z
-        print(f"{twist.linear.x}, {twist.angular.z}")
+        print(f"twist.linear.x: {twist.linear.x}, twist.angular.z: {twist.angular.z}")
         self.publisher_.publish(twist)
-        print(f"{twist.linear.x}, {twist.angular.z}")
 
     def turnRight(self):
         self.get_logger().info('turnRight')
         while GPIO.input(RR_PIN):
-            self.x = 0.0
+            self.x = -0.005
             self.z = -rotatechange
             self.publish()
         while not (GPIO.input(L_PIN) and GPIO.input(R_PIN)):
@@ -59,11 +58,11 @@ class linerMover(Node):
             self.publish()
 
     def turnLeft(self):
-        self.get_logger().info('turnLeft')
+        self.get_logger().info('turnLeftttttttt')
         self.z = rotatechange
         self.x = speedchange/4
         while GPIO.input(LL_PIN):
-            self.x = 0.0
+            self.x = -0.005
             self.z = rotatechange
             self.publish()
         while not (GPIO.input(L_PIN) and GPIO.input(R_PIN)):
@@ -75,7 +74,6 @@ class linerMover(Node):
         self.get_logger().info('stght')
         self.x = speedchange
         self.z = 0.0
-        print(f"self.x: {self.x}, self.z: {self.z}")
 
     def reverse(self):
         global innerSensor
@@ -100,8 +98,8 @@ class linerMover(Node):
                 nudge = 1 #go right
         self.get_logger().info('grhsbdruihgrdnughdr')
         self.x = 0.0
-        self.get_logger().info(nudge)
-        while (GPIO.input(LL_PIN) or GPIO.input(RR_PIN)):
+        print(f"nudge: {nudge}")
+        while (GPIO.input(LL_PIN) and GPIO.input(RR_PIN)):
             if (nudge == 0):
                 self.z = rotatechange #nudgeleft
             else:
@@ -150,17 +148,12 @@ class linerMover(Node):
                 if ([1, 1] == innerSensor):
                     if ([0, 0] == outerSensor):
                         self.moveStraight()
-                        if (reverse):
-                            reverse = False
                     elif ([0, 1] == outerSensor):
                         self.turnRight()
-                        pass
                     elif ([1, 0] == outerSensor):
                         self.turnLeft()
-                        pass
                     elif ([1, 1] == outerSensor):
                         self.checkPoint()
-                        pass
                 elif ([0, 1] == innerSensor):
                     self.nudgeRight()
                 elif ([1, 0] == innerSensor):
