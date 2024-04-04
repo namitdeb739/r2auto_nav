@@ -78,17 +78,21 @@ class linerMover(Node):
         print(f"self.x: {self.x}, self.z: {self.z}")
 
     def reverse(self):
+        global innerSensor
+        global outerSensor
         self.get_logger().info('reverse')
         self.x = 0.01
         self.z = 0.0
         self.publish()
         nudge = 0
         first = True
-        while ((not GPIO.input(L_PIN)) and (not GPIO.input(R_PIN))):
-            if (first and GPIO.input(L_PIN)):
+        while ([0, 0] != innerSensor):
+            innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
+            outerSensor = [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]
+            if (first and (innerSensor[0] or (outerSensor[0] and [0,0] == innerSensor))):
                 first = False
                 nudge = 0 #go left
-            if (first and GPIO.input(R_PIN)):
+            if (first and (innerSensor[1] or (outerSensor[1] and [0,0] == innerSensor))):
                 first = False
                 nudge = 1 #go right
         self.x = 0.0
@@ -119,7 +123,6 @@ class linerMover(Node):
             self.get_logger().info('Checkpoint: ')
             self.get_logger().info(str(self.counter))
 
-
     def stopbot(self):
         self.get_logger().info('In stopbot')
         # publish to cmd_vel to move TurtleBot
@@ -129,6 +132,8 @@ class linerMover(Node):
 
     def mover(self):
         global reverse
+        global innerSensor
+        global outerSensor
         try:
             while True:
                 innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
@@ -158,7 +163,6 @@ class linerMover(Node):
                     self.reverse()
                 self.publish()
                 print(f"self.x: {self.x}, self.z: {self.z}")
-                
 
         except Exception as e:
             print(e)
