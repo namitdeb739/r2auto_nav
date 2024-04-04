@@ -49,11 +49,11 @@ class linerMover(Node):
     def turnRight(self):
         self.get_logger().info('turnRight')
         while GPIO.input(RR_PIN):
-            self.x = -0.005
+            self.x = -0.01
             self.z = -rotatechange
             self.publish()
         while not (GPIO.input(L_PIN) and GPIO.input(R_PIN)):
-            self.x = 0.0
+            self.x = -0.0085
             self.z = -rotatechange
             self.publish()
 
@@ -62,11 +62,11 @@ class linerMover(Node):
         self.z = rotatechange
         self.x = speedchange/4
         while GPIO.input(LL_PIN):
-            self.x = -0.005
+            self.x = -0.01
             self.z = rotatechange
             self.publish()
         while not (GPIO.input(L_PIN) and GPIO.input(R_PIN)):
-            self.x = 0.0
+            self.x = -0.0085
             self.z = rotatechange
             self.publish()
 
