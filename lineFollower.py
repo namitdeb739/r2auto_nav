@@ -80,7 +80,7 @@ class linerMover(Node):
     def reverse(self):
         global innerSensor
         global outerSensor
-        self.get_logger().info('reverse')
+        self.get_logger().info('reverseeeeeee')
         self.x = 0.01
         self.z = 0.0
         self.publish()
@@ -89,18 +89,24 @@ class linerMover(Node):
         while ([0, 0] != innerSensor):
             innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
             outerSensor = [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]
+            print(f"innerrrr: {innerSensor}")
+            print(f"outerrrr: {outerSensor}")
+
             if (first and (innerSensor[0] or (outerSensor[0] and [0,0] == innerSensor))):
                 first = False
                 nudge = 0 #go left
             if (first and (innerSensor[1] or (outerSensor[1] and [0,0] == innerSensor))):
                 first = False
                 nudge = 1 #go right
+        self.get_logger().info('grhsbdruihgrdnughdr')
         self.x = 0.0
+        self.get_logger().info(nudge)
         while (GPIO.input(LL_PIN) or GPIO.input(RR_PIN)):
             if (nudge == 0):
                 self.z = rotatechange #nudgeleft
             else:
                 self.z =  -rotatechange #nudgeRight
+            self.get_logger().info("gebhgbresg")
             self.publish()
 
     def nudgeLeft(self):
@@ -163,6 +169,7 @@ class linerMover(Node):
                     self.reverse()
                 self.publish()
                 print(f"self.x: {self.x}, self.z: {self.z}")
+                print("grnusogunsrgrs")
 
         except Exception as e:
             print(e)
