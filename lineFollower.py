@@ -10,7 +10,47 @@ import numpy as np
 import math
 import cmath
 import time
-import subprocess
+import subproces
+import requests
+import json
+OPEN_ANGLE = 35
+CLOSE_ANGLE = 110
+PAYLOAD_PIN = 5
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(PAYLOAD_PIN, GPIO.OUT)
+GPIO.setwarnings(False)
+p = GPIO.PWM(PAYLOAD_PIN, 50)
+
+def payload():
+    p.start(2.5)
+    for i in range(1):
+        for j in range(CLOSE_ANGLE,OPEN_ANGLE, -3):
+            change = j/10
+            p.ChangeDutyCycle(change)
+            time.sleep(0.1)
+            print("open?")
+        time.sleep(1)
+        for j in range(OPEN_ANGLE, CLOSE_ANGLE, 6):
+            change = j/10
+            p.ChangeDutyCycle(change)
+            time.sleep(0.1)
+            print("close?")
+        print("wtf")
+
+p.stop()
+GPIO.cleanup()
+
+def door():
+    url = 'http://192.168.59.89/openDoor'
+    myobj = {
+            "action": "openDoor",
+            "parameters": {"robotId": "34"}
+            }
+    x = requests.post(url, json = myobj)
+    x_dict = json.loads(x.text)
+    status = x_dict["status"]
+    door_num = x_dict["data"]["message"]
+    return door_nums
 
 LL_PIN = 19
 L_PIN = 6
@@ -21,6 +61,7 @@ speedchange = -0.10 #max 0.22
 stop_distance = 0.25
 firstCheck = True
 reverse = False
+espTime = time.now()
 
 def GPIO_setup():
     GPIO.setwarnings(False)
@@ -121,12 +162,17 @@ class linerMover(Node):
     def checkPoint(self):
         global firstCheck, timed
         self.get_logger().info('check')
-        if firstCheck or (time.time() - timed > 10):
+        if firstCheck or (time.time() - timed > 2):
             timed = time.time()
             firstCheck = False
             self.counter += 1
             self.get_logger().info('Checkpoint: ')
             self.get_logger().info(str(self.counter))
+            if (self.counter == 1):
+                subprocess.run(['python3', 'esp.py'])
+                espTime = time.now()
+
+                
 
     def stopbot(self):
         self.get_logger().info('In stopbot')
@@ -141,11 +187,11 @@ class linerMover(Node):
         global outerSensor
         try:
             while True:
-                if self.checkPoint == 2:
-                    subprocess.run(['python', 'payload.py'])
+                if self.counter == 2:
+                    subprocess.run(['python3', 'payload.py'])
                     time.sleep(5)
 
-                if self.checkPoint >= 3:
+                if self.counter >= 3:
                     time.sleep(5)
                     subprocess.run(['ros2', 'run', 'auto_nav', 'control'])
                     break
