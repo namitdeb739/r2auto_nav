@@ -11,7 +11,6 @@ def door():
     x_dict = json.loads(x.text)
     status = x_dict["status"]
     door_num = x_dict["data"]["message"]
-    print(status, door_num)
-door()
+    return door_num
 
-
+print(door())

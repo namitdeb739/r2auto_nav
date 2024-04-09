@@ -10,7 +10,7 @@ import numpy as np
 import math
 import cmath
 import time
-import subproces
+import subprocess
 import requests
 import json
 OPEN_ANGLE = 35
@@ -37,8 +37,8 @@ def payload():
             print("close?")
         print("wtf")
 
-p.stop()
-GPIO.cleanup()
+    p.stop()
+    GPIO.cleanup()
 
 def door():
     url = 'http://192.168.59.89/openDoor'
@@ -50,7 +50,7 @@ def door():
     x_dict = json.loads(x.text)
     status = x_dict["status"]
     door_num = x_dict["data"]["message"]
-    return door_nums
+    return door_num
 
 LL_PIN = 19
 L_PIN = 6
