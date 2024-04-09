@@ -23,6 +23,7 @@ setup(
             'control = auto_nav.control:main',
             'wavefront = auto_nav.wavefront:main',
             'avaneesh = auto_nav.control_avaneesh:main',
+            'payload = auto_nav.payload:main',
         ],
     },
 )

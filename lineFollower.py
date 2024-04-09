@@ -10,6 +10,7 @@ import numpy as np
 import math
 import cmath
 import time
+import subprocess
 
 LL_PIN = 19
 L_PIN = 6
@@ -140,6 +141,15 @@ class linerMover(Node):
         global outerSensor
         try:
             while True:
+                if self.checkPoint == 2:
+                    subprocess.run(['python', 'payload.py'])
+                    time.sleep(5)
+
+                if self.checkPoint >= 3:
+                    time.sleep(5)
+                    subprocess.run(['ros2', 'run', 'auto_nav', 'control'])
+                    break
+                
                 innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
                 outerSensor = [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]
                 print("----------------")
