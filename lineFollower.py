@@ -134,8 +134,6 @@ class linerMover(Node):
         self.x = 0.0
         self.z = 0.0
         # time.sleep(1)
-    
-    
 
     def mover(self):
         global reverse
