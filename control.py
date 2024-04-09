@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid, Odometry
+from std_msgs.msg import Bool 
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import LaserScan
 from rclpy.qos import qos_profile_sensor_data
@@ -368,6 +369,9 @@ class NavigationControl(Node):
                 LaserScan, 'scan', self.scan_callback,
                 qos_profile_sensor_data)
         # self.get_logger().info('Created scan subscriber')
+        
+        self.subscription - self.create_subscription(
+                Bool, 'checkpoint', self.checkpoint_callback, 10)
 
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
         self.get_logger().info("DISCOVERY MODE ACTIVE")
@@ -453,6 +457,9 @@ class NavigationControl(Node):
                     self.c, self.r, self.originX, self.originY)
         # self.get_logger().info("Data: %s\nHeight, Width: %s, %s"
         #                       % (self.data, self.height, self.width))
+
+    def checkpoint_callback(self, msg):
+        self.checkpoint = msg
 
     def scan_callback(self, msg):
         # self.get_logger().info(msg)

@@ -6,6 +6,7 @@ from geometry_msgs.msg import Twist
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import OccupancyGrid
+from std_msgs.msg import Bool
 import numpy as np
 import math
 import cmath
@@ -75,7 +76,8 @@ class linerMover(Node):
     def __init__(self):
         super().__init__('nav')
         #publisher for moving TurtleBot
-        self.publisher_ = self.create_publisher(Twist, 'cmd_vel', 10)
+        self.publisher_twist = self.create_publisher(Twist, 'cmd_vel', 10)
+        self.publisher_bool = self.create_publisher(Bool, 'checkpoint', 10)
         self.get_logger().info('Publisher for Twist')
         self.counter = 0
         self.x = 0.0
@@ -86,7 +88,7 @@ class linerMover(Node):
         twist.linear.x = self.x
         twist.angular.z = self.z
         print(f"twist.linear.x: {twist.linear.x}, twist.angular.z: {twist.angular.z}")
-        self.publisher_.publish(twist)
+        self.publisher_twist.publish(twist)
 
     def turnRight(self):
         self.get_logger().info('turnRight')
@@ -187,13 +189,14 @@ class linerMover(Node):
         global outerSensor
         try:
             while True:
-                if self.counter == 2:
-                    subprocess.run(['python3', 'payload.py'])
+                self.publisher_bool.publish(False)
+                if self.checkPoint == 2:
+                    subprocess.run(['python', 'payload.py'])
                     time.sleep(5)
 
                 if self.counter >= 3:
                     time.sleep(5)
-                    subprocess.run(['ros2', 'run', 'auto_nav', 'control'])
+                    self.publisher_bool.publish(True)
                     break
                 
                 innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
