@@ -15,8 +15,8 @@ LL_PIN = 19
 L_PIN = 6
 R_PIN = 13
 RR_PIN = 26
-rotatechange = 2.75/2 #max 2.8
-speedchange = -0.21/2 #max 0.22
+rotatechange = 2.75/4 #max 2.8
+speedchange = -0.10 #max 0.22
 stop_distance = 0.25
 firstCheck = True
 reverse = False
@@ -39,36 +39,83 @@ class linerMover(Node):
         self.x = 0.0
         self.z = 0.0
 
+    def publish(self):
+        twist = Twist()
+        twist.linear.x = self.x
+        twist.angular.z = self.z
+        print(f"twist.linear.x: {twist.linear.x}, twist.angular.z: {twist.angular.z}")
+        self.publisher_.publish(twist)
+
     def turnRight(self):
         self.get_logger().info('turnRight')
-        self.z = -rotatechange
-        self.x = speedchange
+        while GPIO.input(RR_PIN):
+            self.x = -0.01
+            self.z = -rotatechange
+            self.publish()
+        while not (GPIO.input(L_PIN) and GPIO.input(R_PIN)):
+            self.x = -0.0085
+            self.z = -rotatechange
+            self.publish()
 
     def turnLeft(self):
-        self.get_logger().info('turnLeft')
+        self.get_logger().info('turnLeftttttttt')
         self.z = rotatechange
-        self.x = speedchange
+        self.x = speedchange/4
+        while GPIO.input(LL_PIN):
+            self.x = -0.01
+            self.z = rotatechange
+            self.publish()
+        while not (GPIO.input(L_PIN) and GPIO.input(R_PIN)):
+            self.x = -0.0085
+            self.z = rotatechange
+            self.publish()
 
     def moveStraight(self):
         self.get_logger().info('stght')
         self.x = speedchange
         self.z = 0.0
-        print(f"self.x: {self.x}, self.z: {self.z}")
 
     def reverse(self):
-        self.get_logger().info('reverse')
+        global innerSensor
+        global outerSensor
+        self.get_logger().info('reverseeeeeee')
         self.x = 0.01
         self.z = 0.0
+        self.publish()
+        nudge = 0
+        first = True
+        while ([0, 0] != innerSensor):
+            innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
+            outerSensor = [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]
+            print(f"innerrrr: {innerSensor}")
+            print(f"outerrrr: {outerSensor}")
+
+            if (first and (innerSensor[0] or (outerSensor[0] and [0,0] == innerSensor))):
+                first = False
+                nudge = 0 #go left
+            if (first and (innerSensor[1] or (outerSensor[1] and [0,0] == innerSensor))):
+                first = False
+                nudge = 1 #go right
+        self.get_logger().info('grhsbdruihgrdnughdr')
+        self.x = 0.0
+        print(f"nudge: {nudge}")
+        while (GPIO.input(LL_PIN) and GPIO.input(RR_PIN)):
+            if (nudge == 0):
+                self.z = rotatechange #nudgeleft
+            else:
+                self.z =  -rotatechange #nudgeRight
+            self.get_logger().info("gebhgbresg")
+            self.publish()
 
     def nudgeLeft(self):
         self.get_logger().info('nudgeLeft')
-        self.x = speedchange/2
-        self.z = rotatechange/6
+        self.x = speedchange/5
+        self.z = rotatechange/5
 
     def nudgeRight(self):
         self.get_logger().info('nudgeRight')
-        self.x = speedchange/2
-        self.z = -rotatechange/6
+        self.x = speedchange/5
+        self.z = -rotatechange/5
 
     def checkPoint(self):
         global firstCheck, timed
@@ -80,7 +127,6 @@ class linerMover(Node):
             self.get_logger().info('Checkpoint: ')
             self.get_logger().info(str(self.counter))
 
-
     def stopbot(self):
         self.get_logger().info('In stopbot')
         # publish to cmd_vel to move TurtleBot
@@ -89,6 +135,9 @@ class linerMover(Node):
         # time.sleep(1)
 
     def mover(self):
+        global reverse
+        global innerSensor
+        global outerSensor
         try:
             while True:
                 innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
@@ -99,37 +148,21 @@ class linerMover(Node):
                 if ([1, 1] == innerSensor):
                     if ([0, 0] == outerSensor):
                         self.moveStraight()
-                        if (reverse):
-                            reverse = False
                     elif ([0, 1] == outerSensor):
-                        if (reverse):
-                            self.turnLeft()
                         self.turnRight()
-                        pass
                     elif ([1, 0] == outerSensor):
-                        if (reverse):
-                            self.turnRight()
                         self.turnLeft()
-                        pass
                     elif ([1, 1] == outerSensor):
                         self.checkPoint()
-                        pass
                 elif ([0, 1] == innerSensor):
-                    if (reverse):
-                        self.nudgeLeft()
                     self.nudgeRight()
                 elif ([1, 0] == innerSensor):
-                    if (reverse):
-                        self.nudgeRight()
                     self.nudgeLeft()
                 elif ([0, 0] == innerSensor):
                     self.reverse()
-                twist = Twist()
-                twist.linear.x = self.x
-                twist.angular.z = self.z
+                self.publish()
                 print(f"self.x: {self.x}, self.z: {self.z}")
-                print(f"linear.x: {twist.linear.x}, angular.z{twist.angular.z}")
-                self.publisher_.publish(twist)
+                print("grnusogunsrgrs")
 
         except Exception as e:
             print(e)
