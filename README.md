@@ -83,7 +83,7 @@ For ease of use, we have created the following aliases which we have added to th
 | RPi4 Alias | Command |
 | :---------------- | :------ | 
 | `rosbu`        |   `ros2 launch turtlebot3_bringup robot.launch.py`    | 
-| `line` | `cd ~/turtlebot3_ws/src && linee && lineupdate && linerun` |
+| `line` | `cd ~/turtlebot3_ws/src && colcon build --packages-select r2auto_nav && source install/setup.bash && ros2 run r2auto_nav l` |
 
 #### Setting Up RViz Environment
 Run Slam Toolbox
@@ -157,10 +157,5 @@ Anupama Sriram [anupamasriram000@gmail.com](1annanya3@gmail.com)
 
 ## Acknowledgments
 
-The navigation algorithm developed in `control.py` was developed by 
-* [awesome-readme](https://github.com/matiassingers/awesome-readme)
-* [PurpleBooth](https://gist.github.com/PurpleBooth/109311bb0361f32d87a2)
-* [dbader](https://github.com/dbader/readme-template)
-* [zenorocha](https://gist.github.com/zenorocha/4526327)
-* [fvcproductions](https://gist.github.com/fvcproductions/1bfc2d4aecb01a834b46)
+The navigation algorithm developed in `control.py` was developed by [Abdulkadir TÜRE](https://github.com/abdulkadrtr). Find his repo [here](https://github.com/abdulkadrtr/ROS2-FrontierBaseExplorationForAutonomousRobot).
 
