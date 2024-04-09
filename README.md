@@ -83,7 +83,7 @@ For ease of use, we have created the following aliases which we have added to th
 | RPi4 Alias | Command |
 | :---------------- | :------ | 
 | `rosbu`        |   `ros2 launch turtlebot3_bringup robot.launch.py`    | 
-| `line` |  |
+| `line` | `cd ~/turtlebot3_ws/src && linee && lineupdate && linerun` |
 
 #### Setting Up RViz Environment
 Run Slam Toolbox
