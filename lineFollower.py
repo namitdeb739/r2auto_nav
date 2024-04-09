@@ -57,12 +57,12 @@ LL_PIN = 19
 L_PIN = 6
 R_PIN = 13
 RR_PIN = 26
-rotatechange = 2.75/4 #max 2.8
-speedchange = -0.10 #max 0.22
+rotatechange = -2.75/4 #max 2.8
+speedchange = 0.10 #max 0.22
 stop_distance = 0.25
 firstCheck = True
 reverse = False
-espTime = time.now()
+# espTime = time.now()
 
 def GPIO_setup():
     GPIO.setwarnings(False)
@@ -171,8 +171,16 @@ class linerMover(Node):
             self.get_logger().info('Checkpoint: ')
             self.get_logger().info(str(self.counter))
             if (self.counter == 1):
-                subprocess.run(['python3', 'esp.py'])
-                espTime = time.now()
+                door_num = door()
+                if "1" in door_num:
+                    turnLeft()
+                elif "2" in door_num:
+                    turnRight()
+
+                # espTime = time.now()
+
+            if (self.counter == 2):
+                payload()
 
                 
 
@@ -190,10 +198,6 @@ class linerMover(Node):
         try:
             while True:
                 self.publisher_bool.publish(False)
-                if self.checkPoint == 2:
-                    subprocess.run(['python', 'payload.py'])
-                    time.sleep(5)
-
                 if self.counter >= 3:
                     time.sleep(5)
                     self.publisher_bool.publish(True)
