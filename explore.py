@@ -79,6 +79,8 @@ class Explore(Node):
     def odometry_callback(self, msg):
         self.get_logger().info("In odometry_callback")
         orientation_quat = msg.pose.pose.orientation
+        self.x = msg.pose.pose.position.x
+        self.y = msg.pose.pose.position.y
         self.roll, self.pitch, self.yaw = euler_from_quaternion(
             orientation_quat.x,
             orientation_quat.y,
@@ -193,7 +195,7 @@ class Explore(Node):
         self.get_logger().info("In go_to_furthest_point")
 
         if self.laser_range.size != 0:
-            # Use nanargmax as there are NaNs in laser_range added to replace 0's
+            # Use nanargmax as there are NaNs in laser_range added to replace  0's
             theta = np.nanargmax(self.laser_range)
             self.get_logger().info(
                 "Picked direction: %d %f m" % (theta, self.laser_range[theta])
@@ -203,7 +205,7 @@ class Explore(Node):
             self.get_logger().info("No data!")
 
         # Rotate to that direction
-        self.rotatebot(float(theta))
+        self.rotate(float(theta))
 
         # Start moving
         self.get_logger().info("Start moving")
