@@ -20,7 +20,19 @@ PAYLOAD_PIN = 5
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(PAYLOAD_PIN, GPIO.OUT)
 GPIO.setwarnings(False)
+
 p = GPIO.PWM(PAYLOAD_PIN, 50)
+
+LL_PIN = 26
+L_PIN = 13
+R_PIN = 6
+RR_PIN = 19
+rotatechange = -2.5 #max 2.8
+speedchange = 0.18 #max 0.22
+stop_distance = 0.25
+firstCheck = True
+isTurning = False
+# espTime = time.now()
 
 def payload():
     p.start(2.5)
@@ -39,7 +51,6 @@ def payload():
         print("wtf")
 
     p.stop()
-    GPIO.cleanup()
 
 def door():
     url = 'http://192.168.59.89/openDoor'
@@ -51,18 +62,10 @@ def door():
     x_dict = json.loads(x.text)
     status = x_dict["status"]
     door_num = x_dict["data"]["message"]
+    print(door_num)
     return door_num
 
-LL_PIN = 19
-L_PIN = 6
-R_PIN = 13
-RR_PIN = 26
-rotatechange = -2.75/4 #max 2.8
-speedchange = 0.10 #max 0.22
-stop_distance = 0.25
-firstCheck = True
-reverse = False
-# espTime = time.now()
+
 
 def GPIO_setup():
     GPIO.setwarnings(False)
@@ -91,30 +94,42 @@ class linerMover(Node):
         self.publisher_twist.publish(twist)
 
     def turnRight(self):
+        global isTurning
         self.get_logger().info('turnRight')
-        while GPIO.input(RR_PIN):
-            self.x = -0.01
-            self.z = -rotatechange
-            self.publish()
-        while not (GPIO.input(L_PIN) and GPIO.input(R_PIN)):
-            self.x = -0.0085
-            self.z = -rotatechange
-            self.publish()
+        self.z = -rotatechange
+        self.x = 0.0
+        self.publish()
+        time.sleep(0.555)
+        # self.z = 0.0
+        # self.x = 0.05
+        # self.publish()
+        # startTime = time.time()
+        # while (time.time() - startTime > 0.5):
+        #     print(time.time()-startTime)
+        #     if ([1,1] == [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]):
+        #         break
+        isTurning = False
 
     def turnLeft(self):
+        global isTurning
         self.get_logger().info('turnLeftttttttt')
         self.z = rotatechange
-        self.x = speedchange/4
-        while GPIO.input(LL_PIN):
-            self.x = -0.01
-            self.z = rotatechange
-            self.publish()
-        while not (GPIO.input(L_PIN) and GPIO.input(R_PIN)):
-            self.x = -0.0085
-            self.z = rotatechange
-            self.publish()
+        self.x = 0.0
+        self.publish()
+        time.sleep(0.475)
+        # self.z = 0.0
+        # self.x = 0.05
+        # self.publish()
+        # startTime = time.time()
+        # while (time.time() - startTime > 0.5):
+        #     print(time.time()-startTime)
+        #     if ([1,1] == [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]):
+        #         break
+        isTurning = False
 
     def moveStraight(self):
+        global isTurning
+        isTurning = True
         self.get_logger().info('stght')
         self.x = speedchange
         self.z = 0.0
@@ -123,7 +138,7 @@ class linerMover(Node):
         global innerSensor
         global outerSensor
         self.get_logger().info('reverseeeeeee')
-        self.x = 0.01
+        self.x = -0.01
         self.z = 0.0
         self.publish()
         nudge = 0
@@ -154,12 +169,12 @@ class linerMover(Node):
     def nudgeLeft(self):
         self.get_logger().info('nudgeLeft')
         self.x = speedchange/5
-        self.z = rotatechange/5
+        self.z = rotatechange/4
 
     def nudgeRight(self):
         self.get_logger().info('nudgeRight')
         self.x = speedchange/5
-        self.z = -rotatechange/5
+        self.z = -rotatechange/4
 
     def checkPoint(self):
         global firstCheck, timed
@@ -171,15 +186,29 @@ class linerMover(Node):
             self.get_logger().info('Checkpoint: ')
             self.get_logger().info(str(self.counter))
             if (self.counter == 1):
+                self.stopbot()
+                self.publish()
+                espTime = time.time()
                 door_num = door()
-                if "1" in door_num:
-                    turnLeft()
-                elif "2" in door_num:
-                    turnRight()
-
-                # espTime = time.now()
+                # door_num = "1"
+                self.get_logger().info(door_num)
+                time.sleep(1)
+                while True:
+                    if "1" in door_num:
+                        self.turnLeft()
+                        break
+                    elif "2" in door_num:
+                        self.turnRight()
+                        break
+                    else:
+                        if (time.time() - espTime > 35):
+                            door_num = door()
+                    timed = time.time()
 
             if (self.counter == 2):
+                self.stopbot()
+                self.publish()
+                time.sleep(1)
                 payload()
 
                 
@@ -212,11 +241,16 @@ class linerMover(Node):
                     if ([0, 0] == outerSensor):
                         self.moveStraight()
                     elif ([0, 1] == outerSensor):
-                        self.turnRight()
+                        # if (isTurning):
+                        #     self.turnRight()
+                        pass
                     elif ([1, 0] == outerSensor):
-                        self.turnLeft()
+                        # if (isTurning):
+                        #     self.turnLeft()
+                        pass
                     elif ([1, 1] == outerSensor):
                         self.checkPoint()
+                        pass
                 elif ([0, 1] == innerSensor):
                     self.nudgeRight()
                 elif ([1, 0] == innerSensor):
@@ -225,7 +259,8 @@ class linerMover(Node):
                     self.reverse()
                 self.publish()
                 print(f"self.x: {self.x}, self.z: {self.z}")
-                print("grnusogunsrgrs")
+                if (self.counter == 2):
+                    break
 
         except Exception as e:
             print(e)
