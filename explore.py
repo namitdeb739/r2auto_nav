@@ -1,3 +1,4 @@
+from queue import Queue
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid, Odometry
@@ -76,11 +77,19 @@ class Explore(Node):
         self.subscription_lidar
         self.get_logger().info("Created subscriber for lidar")
 
+        self.visited = set()
+        self.unvisited = Queue()
+        self.current_position = None  # Keep track of the current position
+
+
     def odometry_callback(self, msg):
         self.get_logger().info("In odometry_callback")
         orientation_quat = msg.pose.pose.orientation
         self.x = msg.pose.pose.position.x
         self.y = msg.pose.pose.position.y
+        self.current_position = (self.x, self.y)
+        self.visited.add(self.current_position)
+
         self.roll, self.pitch, self.yaw = euler_from_quaternion(
             orientation_quat.x,
             orientation_quat.y,
@@ -90,10 +99,13 @@ class Explore(Node):
 
     def occupancy_callback(self, msg):
         self.get_logger().info("In occupancy_callback")
+        
         # Create numpy array
         msg_data = np.array(msg.data)
+        
         # Compute histogram to identify percent of bins with -1
         occ_counts = np.histogram(msg_data, occupancy_bins)
+        
         # Calculate total number of bins
         total_bins = msg.info.width * msg.info.height
         self.get_logger().info(
@@ -103,13 +115,21 @@ class Explore(Node):
 
         # Make msg_data go from 0 instead of -1, reshape into 2D
         temp = msg_data + 1
+        
         # Reshape to 2D array using column order
         self.occupancy_data = np.uint8(
             temp.reshape(msg.info.height, msg.info.width, order="F")
         )
         self.occupancy_data = np.uint8(temp.reshape(msg.info.height, msg.info.width))
-        # Print to file
-        np.savetxt(map_file, self.occupancy_data)
+
+        # Add the new unvisited locations to the unvisited queue
+
+        for i in range(msg.info.height):
+            for j in range(msg.info.width):
+                if self.occupancy_data[i, j] == 0:  # 0 represents unoccupied space
+                    unvisited_position = (i, j)
+                    if unvisited_position not in self.visited:
+                        self.unvisited.put(unvisited_position)
 
     def scan_callback(self, msg):
         self.get_logger().info("In scan_callback")
@@ -227,10 +247,58 @@ class Explore(Node):
         time.sleep(1)
         self.publisher_.publish(twist)
 
+    def all_surrounding_visited(self):
+        self.get_logger().info("In all_surrounding_visited")
+
+        # Check all surrounding points
+        for (x, y) in [
+            (1, 0),
+            (0, 1),
+            (-1, 0),
+            (0, -1),
+            (1, 1),
+            (-1, -1),
+            (1, -1),
+            (-1, 1),
+        ]:
+            if (self.x + 30 * x, self.y + 30 * y) not in self.visited:
+                return False
+        return True
+    
+    def go_to_nearest_unvisited(self):
+        self.get_logger().info("In go_to_nearest_unvisited")
+
+        # Check if there are any unvisited points
+        if not self.unvisited.empty():
+            nearest_unvisited = self.unvisited.get()
+            self.go_to_point(nearest_unvisited)
+    
+    def go_to_point(self, point):
+        self.get_logger().info("In go_to_point")
+
+        # Get current position
+        x = self.x
+        y = self.y
+
+        # Calculate angle to point
+        angle = math.atan2(point[1] - y, point[0] - x)
+
+        # Rotate to that direction
+        self.rotate(angle)
+
+        # Start moving
+        twist = Twist()
+        twist.linear.x = speed
+        twist.angular.z = 0.0
+
+        time.sleep(1)
+        self.publisher_.publish(twist)
+
+
     def mover(self):
         try:
             self.get_logger().info("In mover")
-
+            
             # Pick direction point on algorithm and start moving towards it
             self.go_to_furthest_point()
 
@@ -247,6 +315,11 @@ class Explore(Node):
                     if len(foward_distances[0]) > 0:
                         # Stop moving
                         self.stopbot()
+
+
+                        # Check if there are any unvisited points
+                        if self.all_surrounding_visited():
+                            self.go_to_nearest_unvisited()
 
                         # Choose new point and go towards it
                         self.go_to_furthest_point()
