@@ -333,6 +333,9 @@ class Explore(Node):
             self.go_to_furthest_point()
 
             while rclpy.ok():
+                # Allow the callback functions to run
+                rclpy.spin_once(self)
+
                 if not self.checkpoint:
                     continue
 
@@ -356,9 +359,6 @@ class Explore(Node):
 
                         # Choose new point and go towards it
                         self.go_to_furthest_point()
-
-                # allow the callback functions to run
-                rclpy.spin_once(self)
         except Exception as e:
             print(e)
 
