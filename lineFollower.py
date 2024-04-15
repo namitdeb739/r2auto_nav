@@ -81,8 +81,9 @@ class linerMover(Node):
         super().__init__("nav")
         # publisher for moving TurtleBot
         self.publisher_twist = self.create_publisher(Twist, "cmd_vel", 10)
-        self.publisher_bool = self.create_publisher(Bool, "checkpoint", 10)
         self.get_logger().info("Publisher for Twist")
+        self.publisher_checkpoint = self.create_publisher(Bool, "checkpoint", 10)
+        self.get_logger().info("Publisher for checkpoint")
         self.counter = 0
         self.x = 0.0
         self.z = 0.0
@@ -225,7 +226,7 @@ class linerMover(Node):
         global outerSensor
         try:
             while True:
-                self.publisher_bool.publish(False)
+                self.publisher_checkpoint.publish(False)
                 if self.counter >= 3:
                     break
 
@@ -267,7 +268,8 @@ class linerMover(Node):
             # stop moving
             self.stopbot()
             time.sleep(5)
-            self.publisher_bool.publish(True)
+
+            self.publisher_checkpoint.publish(True)
             
 
 

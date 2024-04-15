@@ -19,6 +19,7 @@ occupancy_bins = [-1, 0, 100, 101]
 stop_distance = 0.25
 front_angle = 30
 front_angles = range(-front_angle, front_angle + 1, 1)
+radius = 10
 scan_file = "lidar.txt"
 map_file = "map.txt"
 
@@ -311,7 +312,6 @@ class Explore(Node):
         time.sleep(1)
         self.publisher_.publish(twist)
 
-
     def mover(self):
         try:
             
@@ -332,7 +332,7 @@ class Explore(Node):
                     # If the list is not empty
                     if len(foward_distances[0]) > 0:
                         # Stop moving
-                        self.stopbot()
+                        self.stop()
 
 
                         # Check if there are any unvisited points
@@ -350,10 +350,10 @@ class Explore(Node):
         # Ctrl-c detected
         finally:
             # Stop moving
-            self.stopbot()
+            self.stop()
 
 
-def main(self, args=None):
+def main(args=None):
     rclpy.init(args=args)
     explore = Explore()
     explore.mover()
