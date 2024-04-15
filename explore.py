@@ -19,6 +19,7 @@ occupancy_bins = [-1, 0, 100, 101]
 stop_distance = 0.25
 front_angle = 30
 front_angles = range(-front_angle, front_angle + 1, 1)
+radius = 10
 scan_file = "lidar.txt"
 map_file = "map.txt"
 
@@ -51,8 +52,12 @@ class Explore(Node):
         super().__init__("explore")
 
         # Publisher to move the TurtleBot
-        self.publisher_ = self.create_publisher(Twist, "cmd_vel", 10)
-        self.get_logger().info("Created publisher")
+        self.publisher_twist = self.create_publisher(Twist, "cmd_vel", 10)
+        self.get_logger().info("Created publisher for twist")
+
+        # Publisher to kill the Line Follower
+        self.publisher_kill_line = self.create_publisher(Bool, "kill_line", 10)
+        self.get_logger().info("Created publisher for killing line follower")
 
         # Subscriber to track odometry
         self.subscription_odometry = self.create_subscription(
@@ -77,6 +82,7 @@ class Explore(Node):
         )
         self.subscription_checkpoint
         self.get_logger().info("Created subscriber for checkpoint")
+        self.checkpoint = False
 
         # Subscriber to track lidar
         self.subscription_lidar = self.create_subscription(
@@ -84,6 +90,7 @@ class Explore(Node):
         )
         self.subscription_lidar
         self.get_logger().info("Created subscriber for lidar")
+        self.laser_range = np.array([])
 
         self.visited = set()
         self.unvisited = Queue()
@@ -189,7 +196,7 @@ class Explore(Node):
         twist.angular.z = complex_change_direction * rotate_change
 
         # Start rotation
-        self.publisher_.publish(twist)
+        self.publisher_twist.publish(twist)
 
         # We will use the complex_direction_difference variable to see if we can stop rotating
         complex_direction_difference = complex_change_direction
@@ -223,7 +230,7 @@ class Explore(Node):
 
         # Set the rotation speed to 0 and stop the rotation
         twist.angular.z = 0.0
-        self.publisher_.publish(twist)
+        self.publisher_twist.publish(twist)
 
     def go_to_furthest_point(self):
         if not self.checkpoint:
@@ -251,7 +258,7 @@ class Explore(Node):
         twist.angular.z = 0.0
 
         time.sleep(1)
-        self.publisher_.publish(twist)
+        self.publisher_twist.publish(twist)
 
     def stop(self):
         self.get_logger().info("In stop")
@@ -262,7 +269,7 @@ class Explore(Node):
         twist.angular.z = 0.0
 
         time.sleep(1)
-        self.publisher_.publish(twist)
+        self.publisher_twist.publish(twist)
 
     def all_surrounding_visited(self):
         self.get_logger().info("In all_surrounding_visited")
@@ -309,13 +316,14 @@ class Explore(Node):
         twist.angular.z = 0.0
 
         time.sleep(1)
-        self.publisher_.publish(twist)
-
+        self.publisher_twist.publish(twist)
 
     def mover(self):
         try:
             
             self.get_logger().info("In mover")
+            # allow the callback functions to run
+            rclpy.spin_once(self)
             
             # Pick direction point on algorithm and start moving towards it
             self.go_to_furthest_point()
@@ -332,7 +340,7 @@ class Explore(Node):
                     # If the list is not empty
                     if len(foward_distances[0]) > 0:
                         # Stop moving
-                        self.stopbot()
+                        self.stop()
 
 
                         # Check if there are any unvisited points
@@ -350,10 +358,10 @@ class Explore(Node):
         # Ctrl-c detected
         finally:
             # Stop moving
-            self.stopbot()
+            self.stop()
 
 
-def main(self, args=None):
+def main(args=None):
     rclpy.init(args=args)
     explore = Explore()
     explore.mover()
