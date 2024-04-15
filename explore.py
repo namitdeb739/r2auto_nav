@@ -236,6 +236,11 @@ class Explore(Node):
         if not self.checkpoint:
             return
 
+        # Kill line follower code
+        kill_line = Bool()
+        kill_line.data = True
+        self.publisher_kill_line.publish(kill_line)
+
         self.get_logger().info("In go_to_furthest_point")
 
         if self.laser_range.size != 0:
