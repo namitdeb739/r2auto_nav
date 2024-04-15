@@ -191,7 +191,7 @@ class Explore(Node):
             twist.angular.z = rotate_change
 
             # Publish the velocity command
-            self.publisher.publish(twist)
+            self.publisher_twist.publish(twist)
 
             # Break the loop when the error is small
             if abs(error) < 0.01:
@@ -199,7 +199,7 @@ class Explore(Node):
 
         # Stop the robot after reaching the target
         twist.angular.z = 0
-        self.publisher.publish(twist)
+        self.publisher_twist.publish(twist)
         
 
     def go_to_furthest_point(self):
