@@ -293,11 +293,9 @@ class linerMover(Node):
         global outerSensor
         try:
             while True:
-                # self.publisher_bool.publish(False)
-                # if self.counter >= 3:
-                #     time.sleep(5)
-                #     self.publisher_bool.publish(True)
-                #     break
+                self.publisher_bool.publish(False)
+                if self.counter >= 3:
+                    break
 
                 innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
                 outerSensor = [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]
@@ -346,6 +344,9 @@ class linerMover(Node):
         finally:
             # stop moving
             self.stopbot()
+            time.sleep(5)
+            self.publisher_bool.publish(True)
+            
 
 
 def main(args=None):
