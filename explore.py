@@ -1,4 +1,5 @@
 from queue import Queue
+from tkinter import N
 import rclpy
 from std_msgs.msg import Bool
 from rclpy.node import Node
@@ -66,6 +67,11 @@ class Explore(Node):
         self.subscription_odometry
         self.get_logger().info("Created subscriber for odometry")
 
+        # Initialise odometry fields
+        self.x, self.y = None, None
+        self.current_position = (None, None)
+        self.roll, self.pitch, self.yaw = None, None, None
+
         # Subscriber to track occupancy
         self.subscription_occupancy = self.create_subscription(
             OccupancyGrid,
@@ -75,6 +81,9 @@ class Explore(Node):
         )
         self.subscription_occupancy
         self.get_logger().info("Created subscriber for occupancy")
+
+        # Initialise occupancy fields
+        self.occupancy_data = None
 
         # Subscriber to track checkpoint
         self.subscription_checkpoint = self.create_subscription(
@@ -98,7 +107,7 @@ class Explore(Node):
 
 
     def odometry_callback(self, msg):
-        self.get_logger().info("In odometry_callback")
+        # self.get_logger().info("In odometry_callback")
         orientation_quat = msg.pose.pose.orientation
         self.x = msg.pose.pose.position.x
         self.y = msg.pose.pose.position.y
@@ -150,10 +159,10 @@ class Explore(Node):
         self.get_logger().info("In checkpoint_callback")
         
         self.checkpoint = msg.data
-        self.get_logger().info(f"Checkpoint updated: {self.checkpoint}")
+        self.get_logger().info(f"Checkpoint: {self.checkpoint}")
 
     def scan_callback(self, msg):
-        self.get_logger().info("In scan_callback")
+        # self.get_logger().info("In scan_callback")
         # Create numpy array
         self.laser_range = np.array(msg.ranges)
         # Print to file
@@ -238,6 +247,11 @@ class Explore(Node):
 
         self.get_logger().info("In go_to_furthest_point")
 
+        # Kill line follower code
+        kill_line = Bool()
+        kill_line.data = True
+        self.publisher_kill_line.publish(kill_line)
+
         if self.laser_range.size != 0:
             # Use nanargmax as there are NaNs in laser_range added to replace  0's
             theta = np.nanargmax(self.laser_range)
@@ -285,11 +299,11 @@ class Explore(Node):
             (1, -1),
             (-1, 1),
         ]:
-            if (self.x + 30 * x, self.y + 30 * y) not in self.visited:
+            if (self.x + radius * x, self.y + radius * y) not in self.visited:
                 return False
         return True
     
-    def go_to_nearest_unvisited(self):
+    def go_to_nearest_unvisited(self):        
         self.get_logger().info("In go_to_nearest_unvisited")
 
         # Check if there are any unvisited points
@@ -320,15 +334,21 @@ class Explore(Node):
 
     def mover(self):
         try:
-            
             self.get_logger().info("In mover")
-            # allow the callback functions to run
+            
+            # Allow the callback functions to run
             rclpy.spin_once(self)
             
             # Pick direction point on algorithm and start moving towards it
             self.go_to_furthest_point()
 
             while rclpy.ok():
+                # Allow the callback functions to run
+                rclpy.spin_once(self)
+
+                if not self.checkpoint:
+                    continue
+
                 if self.laser_range.size != 0:
                     # Check distances in front of TurtleBot and find values less
                     # than stop_distance
@@ -349,9 +369,6 @@ class Explore(Node):
 
                         # Choose new point and go towards it
                         self.go_to_furthest_point()
-
-                # allow the callback functions to run
-                rclpy.spin_once(self)
         except Exception as e:
             print(e)
 
