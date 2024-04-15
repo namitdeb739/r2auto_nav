@@ -98,7 +98,7 @@ class Explore(Node):
 
 
     def odometry_callback(self, msg):
-        self.get_logger().info("In odometry_callback")
+        # self.get_logger().info("In odometry_callback")
         orientation_quat = msg.pose.pose.orientation
         self.x = msg.pose.pose.position.x
         self.y = msg.pose.pose.position.y
@@ -147,13 +147,13 @@ class Explore(Node):
                         self.unvisited.put(unvisited_position)
 
     def checkpoint_callback(self, msg):
-        self.get_logger().info("In checkpoint_callback")
+        # self.get_logger().info("In checkpoint_callback")
         
         self.checkpoint = msg.data
-        self.get_logger().info(f"Checkpoint updated: {self.checkpoint}")
+        self.get_logger().info(f"Checkpoint: {self.checkpoint}")
 
     def scan_callback(self, msg):
-        self.get_logger().info("In scan_callback")
+        # self.get_logger().info("In scan_callback")
         # Create numpy array
         self.laser_range = np.array(msg.ranges)
         # Print to file
@@ -294,7 +294,7 @@ class Explore(Node):
                 return False
         return True
     
-    def go_to_nearest_unvisited(self):
+    def go_to_nearest_unvisited(self):        
         self.get_logger().info("In go_to_nearest_unvisited")
 
         # Check if there are any unvisited points
@@ -325,7 +325,6 @@ class Explore(Node):
 
     def mover(self):
         try:
-    
             self.get_logger().info("In mover")
             # Allow the callback functions to run
             rclpy.spin_once(self)
@@ -334,6 +333,9 @@ class Explore(Node):
             self.go_to_furthest_point()
 
             while rclpy.ok():
+                if not self.checkpoint:
+                    continue
+
                 if self.laser_range.size != 0:
                     # Check distances in front of TurtleBot and find values less
                     # than stop_distance
