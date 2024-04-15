@@ -355,7 +355,7 @@ class Explore(Node):
                     foward_distances = (
                         self.laser_range[front_angles] < float(stop_distance)
                     ).nonzero()
-                    # self.get_logger().info("Distances: %s" % str(foward_distances))
+                    self.get_logger().info("Distances: %s" % str(foward_distances))
 
                     # If the list is not empty
                     if len(foward_distances[0]) > 0:
