@@ -290,7 +290,7 @@ class Explore(Node):
             (1, -1),
             (-1, 1),
         ]:
-            if (self.x + 30 * x, self.y + 30 * y) not in self.visited:
+            if (self.x + radius * x, self.y + radius * y) not in self.visited:
                 return False
         return True
     
@@ -325,9 +325,9 @@ class Explore(Node):
 
     def mover(self):
         try:
-            
+    
             self.get_logger().info("In mover")
-            # allow the callback functions to run
+            # Allow the callback functions to run
             rclpy.spin_once(self)
             
             # Pick direction point on algorithm and start moving towards it
