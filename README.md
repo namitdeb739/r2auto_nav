@@ -159,3 +159,4 @@ Anupama Sriram [anupamasriram000@gmail.com](1annanya3@gmail.com)
 
 The navigation algorithm developed in `control.py` was developed by [Abdulkadir TÜRE](https://github.com/abdulkadrtr). Find his repo [here](https://github.com/abdulkadrtr/ROS2-FrontierBaseExplorationForAutonomousRobot).
 
+The algorithm developed in `explore.py` implements elements of `control.py` and `r2files/r2_auto.nav.py` developed by [Dr. Shih-Cheng Yen](https://github.com/shihchengyen).

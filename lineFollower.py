@@ -24,7 +24,6 @@ GPIO.setwarnings(False)
 
 p = GPIO.PWM(PAYLOAD_PIN, 50)
 
-<<<<<<< HEAD
 LL_PIN = 26
 L_PIN = 13
 R_PIN = 6
@@ -35,8 +34,6 @@ stop_distance = 0.25
 firstCheck = True
 isTurning = False
 # espTime = time.now()
-=======
->>>>>>> 8cdaf9677d8d149f8852b709e3660bf5595d639f
 
 def payload():
     p.start(2.5)
@@ -68,19 +65,6 @@ def door():
     return door_num
 
 
-<<<<<<< HEAD
-=======
-LL_PIN = 19
-L_PIN = 6
-R_PIN = 13
-RR_PIN = 26
-rotatechange = -2.75 / 4  # max 2.8
-speedchange = 0.10  # max 0.22
-stop_distance = 0.25
-firstCheck = True
-reverse = False
-# espTime = time.now()
->>>>>>> 8cdaf9677d8d149f8852b709e3660bf5595d639f
 
 
 def GPIO_setup():
@@ -111,7 +95,6 @@ class linerMover(Node):
         self.publisher_twist.publish(twist)
 
     def turnRight(self):
-<<<<<<< HEAD
         global isTurning
         self.get_logger().info('turnRight')
         self.z = -rotatechange
@@ -149,46 +132,14 @@ class linerMover(Node):
         global isTurning
         isTurning = True
         self.get_logger().info('stght')
-=======
-        self.get_logger().info("turnRight")
-        while GPIO.input(RR_PIN):
-            self.x = -0.01
-            self.z = -rotatechange
-            self.publish()
-        while not (GPIO.input(L_PIN) and GPIO.input(R_PIN)):
-            self.x = -0.0085
-            self.z = -rotatechange
-            self.publish()
-
-    def turnLeft(self):
-        self.get_logger().info("turnLeftttttttt")
-        self.z = rotatechange
-        self.x = speedchange / 4
-        while GPIO.input(LL_PIN):
-            self.x = -0.01
-            self.z = rotatechange
-            self.publish()
-        while not (GPIO.input(L_PIN) and GPIO.input(R_PIN)):
-            self.x = -0.0085
-            self.z = rotatechange
-            self.publish()
-
-    def moveStraight(self):
-        self.get_logger().info("stght")
->>>>>>> 8cdaf9677d8d149f8852b709e3660bf5595d639f
         self.x = speedchange
         self.z = 0.0
 
     def reverse(self):
         global innerSensor
         global outerSensor
-<<<<<<< HEAD
         self.get_logger().info('reverseeeeeee')
         self.x = -0.01
-=======
-        self.get_logger().info("reverseeeeeee")
-        self.x = 0.01
->>>>>>> 8cdaf9677d8d149f8852b709e3660bf5595d639f
         self.z = 0.0
         self.publish()
         nudge = 0
@@ -217,7 +168,6 @@ class linerMover(Node):
             self.publish()
 
     def nudgeLeft(self):
-<<<<<<< HEAD
         self.get_logger().info('nudgeLeft')
         self.x = speedchange/5
         self.z = rotatechange/4
@@ -226,16 +176,6 @@ class linerMover(Node):
         self.get_logger().info('nudgeRight')
         self.x = speedchange/5
         self.z = -rotatechange/4
-=======
-        self.get_logger().info("nudgeLeft")
-        self.x = speedchange / 5
-        self.z = rotatechange / 5
-
-    def nudgeRight(self):
-        self.get_logger().info("nudgeRight")
-        self.x = speedchange / 5
-        self.z = -rotatechange / 5
->>>>>>> 8cdaf9677d8d149f8852b709e3660bf5595d639f
 
     def checkPoint(self):
         global firstCheck, timed
@@ -246,14 +186,10 @@ class linerMover(Node):
             self.counter += 1
             self.get_logger().info("Checkpoint: ")
             self.get_logger().info(str(self.counter))
-<<<<<<< HEAD
             if (self.counter == 1):
                 self.stopbot()
                 self.publish()
                 espTime = time.time()
-=======
-            if self.counter == 1:
->>>>>>> 8cdaf9677d8d149f8852b709e3660bf5595d639f
                 door_num = door()
                 # door_num = "1"
                 self.get_logger().info(door_num)
@@ -270,14 +206,10 @@ class linerMover(Node):
                             door_num = door()
                     timed = time.time()
 
-<<<<<<< HEAD
             if (self.counter == 2):
                 self.stopbot()
                 self.publish()
                 time.sleep(1)
-=======
-            if self.counter == 2:
->>>>>>> 8cdaf9677d8d149f8852b709e3660bf5595d639f
                 payload()
 
     def stopbot(self):
@@ -305,7 +237,6 @@ class linerMover(Node):
                 if [1, 1] == innerSensor:
                     if [0, 0] == outerSensor:
                         self.moveStraight()
-<<<<<<< HEAD
                     elif ([0, 1] == outerSensor):
                         # if (isTurning):
                         #     self.turnRight()
@@ -318,15 +249,6 @@ class linerMover(Node):
                         self.checkPoint()
                         pass
                 elif ([0, 1] == innerSensor):
-=======
-                    elif [0, 1] == outerSensor:
-                        self.turnRight()
-                    elif [1, 0] == outerSensor:
-                        self.turnLeft()
-                    elif [1, 1] == outerSensor:
-                        self.checkPoint()
-                elif [0, 1] == innerSensor:
->>>>>>> 8cdaf9677d8d149f8852b709e3660bf5595d639f
                     self.nudgeRight()
                 elif [1, 0] == innerSensor:
                     self.nudgeLeft()
