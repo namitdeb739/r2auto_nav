@@ -68,9 +68,9 @@ class Explore(Node):
         self.get_logger().info("Created subscriber for odometry")
 
         # Initialise odometry fields
-        self.x, self.y = None, None
-        self.current_position = (None, None)
-        self.roll, self.pitch, self.yaw = None, None, None
+        self.x, self.y = 0.0, 0.0
+        self.current_position = (0.0, 0.0)
+        self.roll, self.pitch, self.yaw = 0.0, 0.0, 0.0
 
         # Subscriber to track occupancy
         self.subscription_occupancy = self.create_subscription(
