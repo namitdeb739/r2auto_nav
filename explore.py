@@ -317,6 +317,8 @@ class Explore(Node):
         try:
             
             self.get_logger().info("In mover")
+            # allow the callback functions to run
+            rclpy.spin_once(self)
             
             # Pick direction point on algorithm and start moving towards it
             self.go_to_furthest_point()
