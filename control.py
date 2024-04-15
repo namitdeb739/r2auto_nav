@@ -385,6 +385,9 @@ class NavigationControl(Node):
         twist = Twist()
         # self.get_logger().info("Twist: %s" % (twist))
         while True:  # Wait until sensor data arrives.
+            if self.checkpoint is False:
+                time.sleep(0.1)
+                continue
             has_map_data = hasattr(self, 'map_data')
             has_odom_data = hasattr(self, 'odom_data')
             has_scan_data = hasattr(self, 'scan_data')

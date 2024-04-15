@@ -144,7 +144,6 @@ class Explore(Node):
         self.occupancy_data = np.uint8(
             temp.reshape(msg.info.height, msg.info.width, order="F")
         )
-        self.occupancy_data = np.uint8(temp.reshape(msg.info.height, msg.info.width))
 
         # Add the new unvisited locations to the unvisited queue
 
@@ -242,8 +241,8 @@ class Explore(Node):
         self.publisher_twist.publish(twist)
 
     def go_to_furthest_point(self):
-        if not self.checkpoint:
-            return
+        # if not self.checkpoint:
+        #     return
 
         self.get_logger().info("In go_to_furthest_point")
 
@@ -346,8 +345,8 @@ class Explore(Node):
                 # Allow the callback functions to run
                 rclpy.spin_once(self)
 
-                if not self.checkpoint:
-                    continue
+                # if not self.checkpoint:
+                #     continue
 
                 if self.laser_range.size != 0:
                     # Check distances in front of TurtleBot and find values less
