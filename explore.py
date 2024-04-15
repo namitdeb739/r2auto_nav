@@ -147,7 +147,7 @@ class Explore(Node):
                         self.unvisited.put(unvisited_position)
 
     def checkpoint_callback(self, msg):
-        # self.get_logger().info("In checkpoint_callback")
+        self.get_logger().info("In checkpoint_callback")
         
         self.checkpoint = msg.data
         self.get_logger().info(f"Checkpoint: {self.checkpoint}")
