@@ -148,12 +148,12 @@ class Explore(Node):
 
         # Add the new unvisited locations to the unvisited queue
 
-        for i in range(msg.info.height):
-            for j in range(msg.info.width):
-                if self.occupancy_data[i, j] == 0:  # 0 represents unoccupied space
-                    unvisited_position = (i, j)
-                    if unvisited_position not in self.visited:
-                        self.unvisited.put(unvisited_position)
+        # for i in range(msg.info.height):
+        #     for j in range(msg.info.width):
+        #         if self.occupancy_data[i, j] == 0:  # 0 represents unoccupied space
+        #             unvisited_position = (i, j)
+        #             if unvisited_position not in self.visited:
+        #                 self.unvisited.put(unvisited_position)
 
     def checkpoint_callback(self, msg):
         self.get_logger().info("In checkpoint_callback")
@@ -364,8 +364,8 @@ class Explore(Node):
 
 
                         # Check if there are any unvisited points
-                        if self.all_surrounding_visited():
-                            self.go_to_nearest_unvisited()
+                        # if self.all_surrounding_visited():
+                        #     self.go_to_nearest_unvisited()
 
                         # Choose new point and go towards it
                         self.go_to_furthest_point()
