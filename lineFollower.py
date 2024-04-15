@@ -86,16 +86,17 @@ class linerMover(Node):
         self.get_logger().info("Publisher for Twist")
         self.publisher_checkpoint = self.create_publisher(Bool, "checkpoint", 10)
         self.get_logger().info("Publisher for checkpoint")
-        self.subscriptions_kill_line = self.create_subscription(Bool, "kill_line", self.kill_line_callback, 10)
-        self.subscriptions_kill_line
+        self.subscription_kill_line = self.create_subscription(Bool, "kill_line", self.kill_line_callback, 10)
+        self.subscription_kill_line
         self.can_kill = False
         self.counter = 0
         self.x = 0.0
         self.z = 0.0
 
     def kill_line_callback(self, msg):
-        self.can_kill = msg.data
         self.get_logger().info(f"can_kill: {self.can_kill}")
+        self.can_kill = msg.data
+        self.get_logger().info("here2")
 
     def publish(self):
         twist = Twist()
@@ -104,13 +105,29 @@ class linerMover(Node):
         print(f"twist.linear.x: {twist.linear.x}, twist.angular.z: {twist.angular.z}")
         self.publisher_twist.publish(twist)
 
+    def fullTurn(self):
+        self.z = 0.0
+        self.x = 0.08
+        self.publish()
+        time.sleep(2)
+        self.stopbot()
+        self.publish()
+        while ([1, 1] == [GPIO.input(L_PIN), GPIO.input(R_PIN)]):
+            self.z = 0.5
+            self.x = 0.0
+            self.publish()
+        
+        if (1 in [GPIO.input(L_PIN), GPIO.input(R_PIN)]):
+            self.stopbot()
+            self.publish()
+
     def turnRight(self):
         global isTurning
         self.get_logger().info('turnRight')
         self.z = -rotatechange
         self.x = 0.0
         self.publish()
-        time.sleep(0.555)
+        time.sleep(0.45)
         # self.z = 0.0
         # self.x = 0.05
         # self.publish()
@@ -127,7 +144,7 @@ class linerMover(Node):
         self.z = rotatechange
         self.x = 0.0
         self.publish()
-        time.sleep(0.475)
+        time.sleep(0.45)
         # self.z = 0.0
         # self.x = 0.05
         # self.publish()
@@ -201,7 +218,7 @@ class linerMover(Node):
                 self.publish()
                 espTime = time.time()
                 door_num = door()
-                # door_num = "1"
+                door_num = "1"
                 self.get_logger().info(door_num)
                 time.sleep(1)
                 while True:
@@ -210,6 +227,7 @@ class linerMover(Node):
                         break
                     elif "2" in door_num:
                         self.turnRight()
+
                         break
                     else:
                         if (time.time() - espTime > 35):
@@ -221,6 +239,8 @@ class linerMover(Node):
                 self.publish()
                 time.sleep(1)
                 payload()
+                time.sleep(1)
+
 
     def stopbot(self):
         self.get_logger().info("In stopbot")
@@ -246,7 +266,7 @@ class linerMover(Node):
                 print(f"inner: {innerSensor}")
                 print(f"outer: {outerSensor}")
                 if [1, 1] == innerSensor:
-                    if [0, 0] == outerSensor:
+                    if 0 in outerSensor:
                         self.moveStraight()
                     elif ([0, 1] == outerSensor):
                         # if (isTurning):
@@ -278,10 +298,15 @@ class linerMover(Node):
             # stop moving
             self.stopbot()
             time.sleep(5)
+            self.get_logger().info(f"yes: {self.can_kill}")
             checkPublish.data = True
-            while not self.can_kill:
-                rclpy.spin_once(self)
+            for i in range(200):
+                # self.get_logger().info("here")
+                # rclpy.spin_once(self)
+                # self.get_logger().info("here2")
                 self.publisher_checkpoint.publish(checkPublish)
+                # if (self.can_kill):
+                #     break
                 
             
 
