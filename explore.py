@@ -86,6 +86,7 @@ class Explore(Node):
         )
         self.subscription_lidar
         self.get_logger().info("Created subscriber for lidar")
+        self.laser_range = np.array([])
 
         self.visited = set()
         self.unvisited = Queue()
