@@ -122,20 +122,20 @@ class Explore(Node):
         )
 
     def occupancy_callback(self, msg):
-        self.get_logger().info("In occupancy_callback")
+        # self.get_logger().info("In occupancy_callback")
         
         # Create numpy array
         msg_data = np.array(msg.data)
         
         # Compute histogram to identify percent of bins with -1
-        occ_counts = np.histogram(msg_data, occupancy_bins)
+        # occ_counts = np.histogram(msg_data, occupancy_bins)
         
         # Calculate total number of bins
-        total_bins = msg.info.width * msg.info.height
-        self.get_logger().info(
-            "Unmapped: %i Unoccupied: %i Occupied: %i Total: %i"
-            % (occ_counts[0][0], occ_counts[0][1], occ_counts[0][2], total_bins)
-        )
+        # total_bins = msg.info.width * msg.info.height
+        # self.get_logger().info(
+        #     "Unmapped: %i Unoccupied: %i Occupied: %i Total: %i"
+        #     % (occ_counts[0][0], occ_counts[0][1], occ_counts[0][2], total_bins)
+        # )
 
         # Make msg_data go from 0 instead of -1, reshape into 2D
         temp = msg_data + 1
