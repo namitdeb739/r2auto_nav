@@ -52,8 +52,12 @@ class Explore(Node):
         super().__init__("explore")
 
         # Publisher to move the TurtleBot
-        self.publisher_ = self.create_publisher(Twist, "cmd_vel", 10)
-        self.get_logger().info("Created publisher")
+        self.publisher_twist = self.create_publisher(Twist, "cmd_vel", 10)
+        self.get_logger().info("Created publisher for twist")
+
+        # Publisher to kill the Line Follower
+        self.publisher_kill_line = self.create_publisher(Bool, "kill_line", 10)
+        self.get_logger().info("Created publisher for killing line follower")
 
         # Subscriber to track odometry
         self.subscription_odometry = self.create_subscription(
@@ -192,7 +196,7 @@ class Explore(Node):
         twist.angular.z = complex_change_direction * rotate_change
 
         # Start rotation
-        self.publisher_.publish(twist)
+        self.publisher_twist.publish(twist)
 
         # We will use the complex_direction_difference variable to see if we can stop rotating
         complex_direction_difference = complex_change_direction
@@ -226,7 +230,7 @@ class Explore(Node):
 
         # Set the rotation speed to 0 and stop the rotation
         twist.angular.z = 0.0
-        self.publisher_.publish(twist)
+        self.publisher_twist.publish(twist)
 
     def go_to_furthest_point(self):
         if not self.checkpoint:
@@ -254,7 +258,7 @@ class Explore(Node):
         twist.angular.z = 0.0
 
         time.sleep(1)
-        self.publisher_.publish(twist)
+        self.publisher_twist.publish(twist)
 
     def stop(self):
         self.get_logger().info("In stop")
@@ -265,7 +269,7 @@ class Explore(Node):
         twist.angular.z = 0.0
 
         time.sleep(1)
-        self.publisher_.publish(twist)
+        self.publisher_twist.publish(twist)
 
     def all_surrounding_visited(self):
         self.get_logger().info("In all_surrounding_visited")
@@ -312,7 +316,7 @@ class Explore(Node):
         twist.angular.z = 0.0
 
         time.sleep(1)
-        self.publisher_.publish(twist)
+        self.publisher_twist.publish(twist)
 
     def mover(self):
         try:
