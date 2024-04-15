@@ -81,7 +81,7 @@ class Explore(Node):
         self.checkpoint = False
 
         # Subscriber to track lidar
-        self.subscription_lidfar = self.create_subscription(
+        self.subscription_lidar = self.create_subscription(
             LaserScan, "scan", self.scan_callback, qos_profile_sensor_data
         )
         self.subscription_lidar
