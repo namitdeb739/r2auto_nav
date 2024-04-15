@@ -1,5 +1,6 @@
 from queue import Queue
 import rclpy
+from std_msgs.msg import Bool
 from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid, Odometry
 from geometry_msgs.msg import Twist
@@ -70,6 +71,13 @@ class Explore(Node):
         self.subscription_occupancy
         self.get_logger().info("Created subscriber for occupancy")
 
+        # Subscriber to track checkpoint
+        self.subscription_checkpoint = self.create_subscription(
+            Bool, "checkpoint", self.checkpoint_callback, 10
+        )
+        self.subscription_checkpoint
+        self.get_logger().info("Created subscriber for checkpoint")
+
         # Subscriber to track lidar
         self.subscription_lidar = self.create_subscription(
             LaserScan, "scan", self.scan_callback, qos_profile_sensor_data
@@ -130,6 +138,12 @@ class Explore(Node):
                     unvisited_position = (i, j)
                     if unvisited_position not in self.visited:
                         self.unvisited.put(unvisited_position)
+
+    def checkpoint_callback(self, msg):
+        self.get_logger().info("In checkpoint_callback")
+        
+        self.checkpoint = msg.data
+        self.get_logger().info(f"Checkpoint updated: {self.checkpoint}")
 
     def scan_callback(self, msg):
         self.get_logger().info("In scan_callback")
@@ -212,6 +226,9 @@ class Explore(Node):
         self.publisher_.publish(twist)
 
     def go_to_furthest_point(self):
+        if not self.checkpoint:
+            return
+
         self.get_logger().info("In go_to_furthest_point")
 
         if self.laser_range.size != 0:
@@ -297,6 +314,7 @@ class Explore(Node):
 
     def mover(self):
         try:
+            
             self.get_logger().info("In mover")
             
             # Pick direction point on algorithm and start moving towards it
@@ -326,7 +344,6 @@ class Explore(Node):
 
                 # allow the callback functions to run
                 rclpy.spin_once(self)
-
         except Exception as e:
             print(e)
 
