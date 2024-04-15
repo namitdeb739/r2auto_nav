@@ -367,7 +367,8 @@ class Explore(Node):
                         #     self.go_to_nearest_unvisited()
 
                         # Choose new point and go towards it
-                        self.go_to_furthest_point()
+                    
+                    self.go_to_furthest_point()
         except Exception as e:
             print(e)
 
