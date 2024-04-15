@@ -184,6 +184,8 @@ class Explore(Node):
 
         while True:
             rclpy.spin_once(self)
+            
+            current_yaw = self.yaw
             # Calculate the error
             error = target_yaw - current_yaw
 
