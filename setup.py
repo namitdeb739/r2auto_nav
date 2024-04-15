@@ -21,9 +21,9 @@ setup(
     entry_points={
         'console_scripts': [
             'control = auto_nav.control:main',
-            'wavefront = auto_nav.wavefront:main',
-            'avaneesh = auto_nav.control_avaneesh:main',
+            'line = auto_nav.lineFollower:main',
             'payload = auto_nav.payload:main',
+            'explore = auto_nav.explore:main',
         ],
     },
 )
