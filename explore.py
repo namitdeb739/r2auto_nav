@@ -1,4 +1,5 @@
 from queue import Queue
+from tkinter import N
 import rclpy
 from std_msgs.msg import Bool
 from rclpy.node import Node
@@ -66,6 +67,11 @@ class Explore(Node):
         self.subscription_odometry
         self.get_logger().info("Created subscriber for odometry")
 
+        # Initialise odometry fields
+        self.x, self.y = None, None
+        self.current_position = (None, None)
+        self.roll, self.pitch, self.yaw = None, None, None
+
         # Subscriber to track occupancy
         self.subscription_occupancy = self.create_subscription(
             OccupancyGrid,
@@ -75,6 +81,9 @@ class Explore(Node):
         )
         self.subscription_occupancy
         self.get_logger().info("Created subscriber for occupancy")
+
+        # Initialise occupancy fields
+        self.occupancy_data = None
 
         # Subscriber to track checkpoint
         self.subscription_checkpoint = self.create_subscription(
@@ -236,12 +245,12 @@ class Explore(Node):
         if not self.checkpoint:
             return
 
+        self.get_logger().info("In go_to_furthest_point")
+
         # Kill line follower code
         kill_line = Bool()
         kill_line.data = True
         self.publisher_kill_line.publish(kill_line)
-
-        self.get_logger().info("In go_to_furthest_point")
 
         if self.laser_range.size != 0:
             # Use nanargmax as there are NaNs in laser_range added to replace  0's
@@ -326,6 +335,7 @@ class Explore(Node):
     def mover(self):
         try:
             self.get_logger().info("In mover")
+            
             # Allow the callback functions to run
             rclpy.spin_once(self)
             
