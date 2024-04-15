@@ -78,6 +78,7 @@ class Explore(Node):
         )
         self.subscription_checkpoint
         self.get_logger().info("Created subscriber for checkpoint")
+        self.checkpoint = False
 
         # Subscriber to track lidar
         self.subscription_lidar = self.create_subscription(
@@ -227,7 +228,7 @@ class Explore(Node):
         self.publisher_.publish(twist)
 
     def go_to_furthest_point(self):
-        if not self.checkpoint:
+        if not hasattr(self.checkpoint) or not self.checkpoint:
             return
 
         self.get_logger().info("In go_to_furthest_point")
