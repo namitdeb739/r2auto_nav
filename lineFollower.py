@@ -34,6 +34,8 @@ stop_distance = 0.25
 firstCheck = True
 isTurning = False
 # espTime = time.now()
+checkPublish = Bool()
+checkPublish.data = False
 
 def payload():
     p.start(2.5)
@@ -55,7 +57,7 @@ def payload():
 
 
 def door():
-    url = "http://192.168.59.89/openDoor"
+    url = "http://192.168.76.89/openDoor"
     myobj = {"action": "openDoor", "parameters": {"robotId": "34"}}
     x = requests.post(url, json=myobj)
     x_dict = json.loads(x.text)
@@ -82,10 +84,17 @@ class linerMover(Node):
         # publisher for moving TurtleBot
         self.publisher_twist = self.create_publisher(Twist, "cmd_vel", 10)
         self.publisher_bool = self.create_publisher(Bool, "checkpoint", 10)
+        self.subscriptions_kill_line = self.create_subscription(Bool, "kill_line", self.kill_line_callback, 10)
+        self.subscriptions_kill_line
+        self.can_kill = False
         self.get_logger().info("Publisher for Twist")
         self.counter = 0
         self.x = 0.0
         self.z = 0.0
+
+    def kill_line_callback(self, msg):
+        self.can_kill = msg.data
+        self.get_logger().info(f"can_kill: {self.can_kill}")
 
     def publish(self):
         twist = Twist()
@@ -225,8 +234,9 @@ class linerMover(Node):
         global outerSensor
         try:
             while True:
-                self.publisher_bool.publish(False)
+                self.publisher_bool.publish(checkPublish)
                 if self.counter >= 3:
+                    self.get_logger().info("breaking")
                     break
 
                 innerSensor = [GPIO.input(L_PIN), GPIO.input(R_PIN)]
@@ -267,7 +277,11 @@ class linerMover(Node):
             # stop moving
             self.stopbot()
             time.sleep(5)
-            self.publisher_bool.publish(True)
+            checkPublish.data = True
+            while not self.can_kill:
+                rclpy.spin_once(self)
+                self.publisher_bool.publish(checkPublish)
+                
             
 
 
