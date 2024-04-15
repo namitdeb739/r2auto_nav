@@ -370,7 +370,7 @@ class NavigationControl(Node):
                 qos_profile_sensor_data)
         # self.get_logger().info('Created scan subscriber')
         
-        self.subscription - self.create_subscription(
+        self.subscription = self.create_subscription(
                 Bool, 'checkpoint', self.checkpoint_callback, 10)
 
         self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
@@ -459,7 +459,8 @@ class NavigationControl(Node):
         #                       % (self.data, self.height, self.width))
 
     def checkpoint_callback(self, msg):
-        self.checkpoint = msg
+        self.checkpoint = msg.data
+        self.get_logger().info(f"Checkpoint: {self.checkpoint}")
 
     def scan_callback(self, msg):
         # self.get_logger().info(msg)
