@@ -14,7 +14,7 @@ import time
 import cmath
 
 # Constants
-rotate_change = 0.5
+rotate_change = 0.8
 speed = 0.22
 occupancy_bins = [-1, 0, 100, 101]
 stop_distance = 0.25
@@ -179,66 +179,28 @@ class Explore(Node):
         current_yaw = self.yaw
         self.get_logger().info("Current: %f" % math.degrees(current_yaw))
 
-        # Use complex numbers to avoid problems when the angles go from
-        complex_yaw = complex(math.cos(current_yaw), math.sin(current_yaw))
-
         # Calculate desired yaw
         target_yaw = current_yaw + math.radians(theta)
 
-        # Convert to complex notation
-        complex_target_yaw = complex(math.cos(target_yaw), math.sin(target_yaw))
-        self.get_logger().info(
-            "Desired: %f" % math.degrees(cmath.phase(complex_target_yaw))
-        )
-
-        # Divide the two complex numbers to get the change in direction
-        complex_change = complex_target_yaw / complex_yaw
-
-        # Get the sign of the imaginary component to figure out which way we have to turn
-        complex_change_direction = np.sign(complex_change.imag)
-
-        # Set linear speed to zero so the TurtleBot rotates on the spot
-        twist.linear.x = 0.0
-
-        # Set the direction to rotate
-        twist.angular.z = complex_change_direction * rotate_change
-
-        # Start rotation
-        self.publisher_twist.publish(twist)
-
-        # We will use the complex_direction_difference variable to see if we can stop rotating
-        complex_direction_difference = complex_change_direction
-        self.get_logger().info(
-            "complex_change_direction: %f complex_direction_difference: %f"
-            % (complex_change_direction, complex_direction_difference)
-        )
-
-        # If the rotation direction was 1.0, then we will want to stop when the complex_direction_difference becomes -1.0, and vice versa
-        while complex_change_direction * complex_direction_difference > 0:
-            # Allow the callback functions to run
+        while True:
             rclpy.spin_once(self)
-            current_yaw = self.yaw
+            # Calculate the error
+            error = target_yaw - current_yaw
 
-            # Convert the current yaw to complex form
-            complex_yaw = complex(math.cos(current_yaw), math.sin(current_yaw))
-            self.get_logger().info("Current Yaw: %f" % math.degrees(current_yaw))
+            # Set the angular speed in the z-axis
+            twist.angular.z = rotate_change
 
-            # Get difference in angle between current and target
-            complex_change = complex_target_yaw / complex_yaw
+            # Publish the velocity command
+            self.publisher.publish(twist)
 
-            # Get the sign to see if we can stop
-            complex_direction_difference = np.sign(complex_change.imag)
+            # Break the loop when the error is small
+            if abs(error) < 0.01:
+                break
 
-            self.get_logger().info(
-                "complex_change_direction: %f complex_direction_difference: %f"
-                % (complex_change_direction, complex_direction_difference)
-            )
-
-        self.get_logger().info("End Yaw: %f" % math.degrees(current_yaw))
-
-        # Set the rotation speed to 0 and stop the rotation
-        twist.angular.z = 0.0
-        self.publisher_twist.publish(twist)
+        # Stop the robot after reaching the target
+        twist.angular.z = 0
+        self.publisher.publish(twist)
+        
 
     def go_to_furthest_point(self):
         # if not self.checkpoint:
