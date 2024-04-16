@@ -15,10 +15,8 @@ import time
 rotate_change = 0.8
 speed = 0.22
 occupancy_bins = [-1, 0, 100, 101]
-stop_distance = 0.25
+stop_distance = 0.50
 front_angle = 30
-front_angles = range(-front_angle, front_angle + 1, 1)
-radius = 10
 scan_file = "lidar.txt"
 map_file = "map.txt"
 
@@ -97,7 +95,6 @@ class Explore(Node):
         self.subscription_lidar
         self.get_logger().info("Created subscriber for lidar")
         self.laser_range = np.array([])
-
 
     def odometry_callback(self, msg):
         self.get_logger().info("In odometry_callback")
@@ -178,7 +175,7 @@ class Explore(Node):
             current_yaw = self.yaw
 
         # Stop the robot after reaching the target
-        twist.angular.z = 0
+        twist.angular.z = 0.0
         self.publisher_twist.publish(twist)
 
     def go_to_furthest_point(self):
@@ -240,7 +237,7 @@ class Explore(Node):
                 self.go_to_furthest_point()
 
                 # Check if any values within the front range are too close
-                if np.nanmin(self.laser_range[front_angles]) < stop_distance:
+                if np.nanmin(np.concatenate((self.laser_range[:front_angle], self.laser_range[-front_angle:]))) < stop_distance:
                     self.get_logger().info('Obstacle detected within stop distance. Stopping.')
                     self.stop()
                     self.rotate(float(randint(-180, 180)))
