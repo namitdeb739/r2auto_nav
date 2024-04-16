@@ -13,8 +13,8 @@ import time
 import math
 
 # Constants
-rotate_change = 0.8
-speed = 0.22
+rotate_change = 0.1
+speed = 0.20
 occupancy_bins = [-1, 0, 100, 101]
 stop_distance = 0.50
 front_angle = 30
@@ -161,8 +161,10 @@ class Explore(Node):
         twist = Twist()
         twist.angular.z = rotate_change
         self.publisher_twist.publish(twist)
+        self.get_logger().info("Rotating %f rad/s" % twist.angular.z)
         time.sleep(randint(1,10))
         twist.angular.z = 0.0
+        self.get_logger().info("Rotating %f rad/s" % twist.angular.z)
         self.publisher_twist.publish(twist)
 
     def go_to_furthest_point(self):
