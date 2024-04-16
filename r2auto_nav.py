@@ -263,7 +263,7 @@ class AutoNav(Node):
                     # check distances in front of TurtleBot and find values less
                     # than stop_distance
                     lri = (self.laser_range[front_angles]<float(stop_distance)).nonzero()
-                    # self.get_logger().info('Distances: %s' % str(lri))
+                    self.get_logger().info('Distances: %s' % str(lri))
 
                     # if the list is not empty
                     if(len(lri[0])>0):
