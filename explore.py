@@ -1,4 +1,5 @@
 from queue import Queue
+from random import randint
 from tkinter import N
 import rclpy
 from std_msgs.msg import Bool
@@ -47,7 +48,6 @@ def euler_from_quaternion(x, y, z, w):
 
     return roll_x, pitch_y, yaw_z  # in radians
 
-
 class Explore(Node):
     def __init__(self):
         super().__init__("explore")
@@ -69,7 +69,6 @@ class Explore(Node):
 
         # Initialise odometry fields
         self.x, self.y = 0.0, 0.0
-        self.current_position = (0.0, 0.0)
         self.roll, self.pitch, self.yaw = 0.0, 0.0, 0.0
 
         # Subscriber to track occupancy
@@ -83,7 +82,8 @@ class Explore(Node):
         self.get_logger().info("Created subscriber for occupancy")
 
         # Initialise occupancy fields
-        self.occupancy_data = None
+        self.occupancy_data = np.empty((0,0))
+        self.is_fully_explored = False
 
         # Subscriber to track checkpoint
         self.subscription_checkpoint = self.create_subscription(
@@ -101,18 +101,12 @@ class Explore(Node):
         self.get_logger().info("Created subscriber for lidar")
         self.laser_range = np.array([])
 
-        self.visited = set()
-        self.unvisited = Queue()
-        self.current_position = None  # Keep track of the current position
-
 
     def odometry_callback(self, msg):
-        # self.get_logger().info("In odometry_callback")
+        self.get_logger().info("In odometry_callback")
         orientation_quat = msg.pose.pose.orientation
         self.x = msg.pose.pose.position.x
         self.y = msg.pose.pose.position.y
-        self.current_position = (self.x, self.y)
-        self.visited.add(self.current_position)
 
         self.roll, self.pitch, self.yaw = euler_from_quaternion(
             orientation_quat.x,
@@ -122,20 +116,20 @@ class Explore(Node):
         )
 
     def occupancy_callback(self, msg):
-        # self.get_logger().info("In occupancy_callback")
+        self.get_logger().info("In occupancy_callback")
         
         # Create numpy array
         msg_data = np.array(msg.data)
         
         # Compute histogram to identify percent of bins with -1
-        # occ_counts = np.histogram(msg_data, occupancy_bins)
+        occ_counts = np.histogram(msg_data, occupancy_bins)
         
         # Calculate total number of bins
-        # total_bins = msg.info.width * msg.info.height
-        # self.get_logger().info(
-        #     "Unmapped: %i Unoccupied: %i Occupied: %i Total: %i"
-        #     % (occ_counts[0][0], occ_counts[0][1], occ_counts[0][2], total_bins)
-        # )
+        total_bins = msg.info.width * msg.info.height
+        self.get_logger().info(
+            "Unmapped: %i Unoccupied: %i Occupied: %i Total: %i"
+            % (occ_counts[0][0], occ_counts[0][1], occ_counts[0][2], total_bins)
+        )
 
         # Make msg_data go from 0 instead of -1, reshape into 2D
         temp = msg_data + 1
@@ -145,14 +139,7 @@ class Explore(Node):
             temp.reshape(msg.info.height, msg.info.width, order="F")
         )
 
-        # Add the new unvisited locations to the unvisited queue
-
-        # for i in range(msg.info.height):
-        #     for j in range(msg.info.width):
-        #         if self.occupancy_data[i, j] == 0:  # 0 represents unoccupied space
-        #             unvisited_position = (i, j)
-        #             if unvisited_position not in self.visited:
-        #                 self.unvisited.put(unvisited_position)
+        self.is_fully_explored = np.all(self.occupancy_data != 0)
 
     def checkpoint_callback(self, msg):
         self.get_logger().info("In checkpoint_callback")
@@ -161,11 +148,14 @@ class Explore(Node):
         self.get_logger().info(f"Checkpoint: {self.checkpoint}")
 
     def scan_callback(self, msg):
-        # self.get_logger().info("In scan_callback")
+        self.get_logger().info("In scan_callback")
+        
         # Create numpy array
         self.laser_range = np.array(msg.ranges)
+        
         # Print to file
         np.savetxt(scan_file, self.laser_range)
+        
         # Replace 0's with nan
         self.laser_range[self.laser_range == 0] = np.nan
 
@@ -182,31 +172,21 @@ class Explore(Node):
         # Calculate desired yaw
         target_yaw = current_yaw + math.radians(theta)
 
-        while True:
+        # Set the angular speed in the z-axis
+        twist.angular.z = rotate_change if target_yaw > current_yaw else -rotate_change
+        self.publisher_twist.publish(twist)
+
+        while target_yaw - current_yaw > 0.01:
             rclpy.spin_once(self)
-            
             current_yaw = self.yaw
-            # Calculate the error
-            error = target_yaw - current_yaw
-
-            # Set the angular speed in the z-axis
-            twist.angular.z = rotate_change
-
-            # Publish the velocity command
-            self.publisher_twist.publish(twist)
-
-            # Break the loop when the error is small
-            if abs(error) < 0.01:
-                break
 
         # Stop the robot after reaching the target
         twist.angular.z = 0
         self.publisher_twist.publish(twist)
-        
 
     def go_to_furthest_point(self):
-        # if not self.checkpoint:
-        #     return
+        if not self.checkpoint:
+            return
 
         self.get_logger().info("In go_to_furthest_point")
 
@@ -248,91 +228,26 @@ class Explore(Node):
         time.sleep(1)
         self.publisher_twist.publish(twist)
 
-    def all_surrounding_visited(self):
-        self.get_logger().info("In all_surrounding_visited")
-
-        # Check all surrounding points
-        for (x, y) in [
-            (1, 0),
-            (0, 1),
-            (-1, 0),
-            (0, -1),
-            (1, 1),
-            (-1, -1),
-            (1, -1),
-            (-1, 1),
-        ]:
-            if (self.x + radius * x, self.y + radius * y) not in self.visited:
-                return False
-        return True
-    
-    def go_to_nearest_unvisited(self):        
-        self.get_logger().info("In go_to_nearest_unvisited")
-
-        # Check if there are any unvisited points
-        if not self.unvisited.empty():
-            nearest_unvisited = self.unvisited.get()
-            self.go_to_point(nearest_unvisited)
-    
-    def go_to_point(self, point):
-        self.get_logger().info("In go_to_point")
-
-        # Get current position
-        x = self.x
-        y = self.y
-
-        # Calculate angle to point
-        angle = math.atan2(point[1] - y, point[0] - x)
-
-        # Rotate to that direction
-        self.rotate(angle)
-
-        # Start moving
-        twist = Twist()
-        twist.linear.x = speed
-        twist.angular.z = 0.0
-
-        time.sleep(1)
-        self.publisher_twist.publish(twist)
-
     def mover(self):
         try:
             self.get_logger().info("In mover")
-            
-            # Allow the callback functions to run
-            rclpy.spin_once(self)
-            
-            # Pick direction point on algorithm and start moving towards it
-            self.go_to_furthest_point()
 
-            while rclpy.ok():
-                # Allow the callback functions to run
+            while not self.checkpoint:
+                # Wait for checkpoint
                 rclpy.spin_once(self)
 
-                # if not self.checkpoint:
-                #     continue
+            while not self.is_fully_explored:
+                # Allow callbacks to update variables
+                rclpy.spin_once(self)
 
-                if self.laser_range.size != 0:
-                    # Check distances in front of TurtleBot and find values less
-                    # than stop_distance
-                    foward_distances = (
-                        self.laser_range[front_angles] < float(stop_distance)
-                    ).nonzero()
-                    self.get_logger().info("Distances: %s" % str(foward_distances))
+                self.go_to_furthest_point()
 
-                    # If the list is not empty
-                    if len(foward_distances[0]) > 0:
-                        # Stop moving
-                        self.stop()
-
-
-                        # Check if there are any unvisited points
-                        # if self.all_surrounding_visited():
-                        #     self.go_to_nearest_unvisited()
-
-                        # Choose new point and go towards it
+                # Check if any values within the front range are too close
+                if np.nanmin(self.laser_range[front_angles]) < stop_distance:
+                    self.get_logger().info('Obstacle detected within stop distance. Stopping.')
+                    self.stop()
+                    self.rotate(float(randint(-180, 180)))
                     
-                    self.go_to_furthest_point()
         except Exception as e:
             print(e)
 
