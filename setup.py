@@ -23,7 +23,7 @@ setup(
             "line = auto_nav.lineFollower:main",
             "payload = auto_nav.payload:main",
             "explore = auto_nav.explore:main",
-            "r2auto_nav = auto_nav.r2files.r2auto_nav:main",
+            "r2auto_nav = auto_nav.r2auto_nav:main",
         ],
     },
 )

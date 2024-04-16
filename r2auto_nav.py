@@ -14,6 +14,7 @@
 
 import rclpy
 from rclpy.node import Node
+from std_msgs.msg import Bool
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from rclpy.qos import qos_profile_sensor_data
@@ -63,9 +64,20 @@ class AutoNav(Node):
         super().__init__('auto_nav')
         
         # create publisher for moving TurtleBot
-        self.publisher_ = self.create_publisher(Twist,'cmd_vel',10)
-        # self.get_logger().info('Created publisher')
-        
+        self.publisher_twist = self.create_publisher(Twist,'cmd_vel',10)
+        self.get_logger().info('Created publisher')
+
+        # Publisher to kill the Line Follower
+        self.publisher_kill_line = self.create_publisher(Bool, "kill_line", 10)
+        self.get_logger().info("Created publisher for killing line follower")
+
+        # Subscriber to track checkpoint
+        self.subscription_checkpoint = self.create_subscription(
+            Bool, "checkpoint", self.checkpoint_callback, 10
+        )
+        self.get_logger().info("Created subscriber for checkpoint")
+        self.checkpoint = False
+
         # create subscription to track orientation
         self.odom_subscription = self.create_subscription(
             Odometry,
@@ -99,13 +111,13 @@ class AutoNav(Node):
 
 
     def odom_callback(self, msg):
-        # self.get_logger().info('In odom_callback')
+        self.get_logger().info('In odom_callback')
         orientation_quat =  msg.pose.pose.orientation
         self.roll, self.pitch, self.yaw = euler_from_quaternion(orientation_quat.x, orientation_quat.y, orientation_quat.z, orientation_quat.w)
 
 
     def occ_callback(self, msg):
-        # self.get_logger().info('In occ_callback')
+        self.get_logger().info('In occ_callback')
         # create numpy array
         msgdata = np.array(msg.data)
         # compute histogram to identify percent of bins with -1
@@ -121,11 +133,16 @@ class AutoNav(Node):
         # self.occdata = np.uint8(oc2.reshape(msg.info.height,msg.info.width,order='F'))
         self.occdata = np.uint8(oc2.reshape(msg.info.height,msg.info.width))
         # print to file
-        np.savetxt(mapfile, self.occdata)
+        # np.savetxt(mapfile, self.occdata)
 
+    def checkpoint_callback(self, msg):
+        self.get_logger().info("In checkpoint_callback")
+
+        self.checkpoint = msg.data
+        self.get_logger().info(f"Checkpoint: {self.checkpoint}")
 
     def scan_callback(self, msg):
-        # self.get_logger().info('In scan_callback')
+        self.get_logger().info('In scan_callback')
         # create numpy array
         self.laser_range = np.array(msg.ranges)
         # print to file
@@ -161,7 +178,7 @@ class AutoNav(Node):
         # set the direction to rotate
         twist.angular.z = c_change_dir * rotatechange
         # start rotation
-        self.publisher_.publish(twist)
+        self.publisher_twist.publish(twist)
 
         # we will use the c_dir_diff variable to see if we can stop rotating
         c_dir_diff = c_change_dir
@@ -185,11 +202,17 @@ class AutoNav(Node):
         # set the rotation speed to 0
         twist.angular.z = 0.0
         # stop the rotation
-        self.publisher_.publish(twist)
+        self.publisher_twist.publish(twist)
 
 
     def pick_direction(self):
-        # self.get_logger().info('In pick_direction')
+        self.get_logger().info('In pick_direction')
+
+        # Kill line follower code
+        kill_line = Bool()
+        kill_line.data = True
+        self.publisher_kill_line.publish(kill_line)
+
         if self.laser_range.size != 0:
             # use nanargmax as there are nan's in laser_range added to replace 0's
             lr2i = np.nanargmax(self.laser_range)
@@ -209,7 +232,7 @@ class AutoNav(Node):
         # not sure if this is really necessary, but things seem to work more
         # reliably with this
         time.sleep(1)
-        self.publisher_.publish(twist)
+        self.publisher_twist.publish(twist)
 
 
     def stopbot(self):
@@ -219,13 +242,17 @@ class AutoNav(Node):
         twist.linear.x = 0.0
         twist.angular.z = 0.0
         # time.sleep(1)
-        self.publisher_.publish(twist)
+        self.publisher_twist.publish(twist)
 
 
     def mover(self):
         try:
             # initialize variable to write elapsed time to file
             # contourCheck = 1
+
+            while not self.checkpoint:
+                # wait for checkpoint
+                rclpy.spin_once(self)
 
             # find direction with the largest distance from the Lidar,
             # rotate to that direction, and start moving
