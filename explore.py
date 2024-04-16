@@ -191,11 +191,12 @@ class Explore(Node):
 
         # Start moving
         self.get_logger().info("Start moving")
+
         twist = Twist()
         twist.linear.x = speed
         twist.angular.z = 0.0
-
         self.publisher_twist.publish(twist)
+        time.sleep(4)
 
     def stop(self):
         self.get_logger().info("In stop")
