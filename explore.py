@@ -170,9 +170,10 @@ class Explore(Node):
         twist.angular.z = rotate_change if target_yaw > current_yaw else -rotate_change
         self.publisher_twist.publish(twist)
 
-        while target_yaw - current_yaw > 0.01:
+        while target_yaw - current_yaw > 0.1:
             rclpy.spin_once(self)
             current_yaw = self.yaw
+            self.get_logger().info("Target: %f, Current: %f" % (math.degrees(target_yaw), math.degrees(current_yaw)))
 
         # Stop the robot after reaching the target
         twist.angular.z = 0.0
