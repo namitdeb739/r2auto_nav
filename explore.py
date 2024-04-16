@@ -154,28 +154,14 @@ class Explore(Node):
         # Replace 0's with nan
         self.laser_range[self.laser_range == 0] = np.nan
 
-    def rotate(self, theta):
+    def rotate(self):
         self.get_logger().info("In rotate")
 
         # Create Twist object
         twist = Twist()
-
-        current_yaw = self.yaw
-        self.get_logger().info("Current: %f" % math.degrees(current_yaw))
-
-        # Calculate desired yaw
-        target_yaw = (current_yaw + math.radians(theta)) % (2 * math.pi)
-
-        # Set the angular speed in the z-axis
-        twist.angular.z = rotate_change if target_yaw > current_yaw else -rotate_change
+        twist.angular.z = rotate_change
         self.publisher_twist.publish(twist)
-
-        while target_yaw - current_yaw > 0.1:
-            rclpy.spin_once(self)
-            current_yaw = self.yaw
-            self.get_logger().info("Target: %f, Current: %f" % (math.degrees(target_yaw), math.degrees(current_yaw)))
-
-        # Stop the robot after reaching the target
+        time.sleep(randint(1,10))
         twist.angular.z = 0.0
         self.publisher_twist.publish(twist)
 
