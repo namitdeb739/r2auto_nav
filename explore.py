@@ -1,6 +1,4 @@
-from queue import Queue
 from random import randint
-from tkinter import N
 import rclpy
 from std_msgs.msg import Bool
 from rclpy.node import Node
@@ -12,7 +10,6 @@ import numpy as np
 import math
 import sys
 import time
-import cmath
 
 # Constants
 rotate_change = 0.8
