@@ -187,7 +187,7 @@ class Explore(Node):
             self.get_logger().info("No data!")
 
         # Rotate to that direction
-        self.rotate(float(theta))
+        self.rotate()
 
         # Start moving
         self.get_logger().info("Start moving")
@@ -196,7 +196,7 @@ class Explore(Node):
         twist.linear.x = speed
         twist.angular.z = 0.0
         self.publisher_twist.publish(twist)
-        time.sleep(4)
+        time.sleep(1)
 
     def stop(self):
         self.get_logger().info("In stop")
@@ -229,7 +229,7 @@ class Explore(Node):
                     self.stop()
 
                     time.sleep(5)
-                    self.rotate(float(randint(-90, 90)))
+                    self.rotate()
                     
         except Exception as e:
             print(e)
