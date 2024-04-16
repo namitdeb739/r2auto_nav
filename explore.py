@@ -10,6 +10,7 @@ import numpy as np
 import math
 import sys
 import time
+import math
 
 # Constants
 rotate_change = 0.8
@@ -159,12 +160,11 @@ class Explore(Node):
         # Create Twist object
         twist = Twist()
 
-        # Get current yaw angle
         current_yaw = self.yaw
         self.get_logger().info("Current: %f" % math.degrees(current_yaw))
 
         # Calculate desired yaw
-        target_yaw = current_yaw + math.radians(theta)
+        target_yaw = (current_yaw + math.radians(theta)) % (2 * math.pi)
 
         # Set the angular speed in the z-axis
         twist.angular.z = rotate_change if target_yaw > current_yaw else -rotate_change
@@ -209,7 +209,6 @@ class Explore(Node):
         twist.linear.x = speed
         twist.angular.z = 0.0
 
-        time.sleep(1)
         self.publisher_twist.publish(twist)
 
     def stop(self):
@@ -241,7 +240,9 @@ class Explore(Node):
                 if np.nanmin(np.concatenate((self.laser_range[:front_angle], self.laser_range[-front_angle:]))) < stop_distance:
                     self.get_logger().info('Obstacle detected within stop distance. Stopping.')
                     self.stop()
-                    self.rotate(float(randint(-180, 180)))
+
+                    time.sleep(5)
+                    self.rotate(float(randint(-90, 90)))
                     
         except Exception as e:
             print(e)
