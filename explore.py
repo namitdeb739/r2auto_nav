@@ -230,8 +230,16 @@ class Explore(Node):
                     self.get_logger().info('Obstacle detected within stop distance. Stopping.')
                     self.stop()
 
-                    time.sleep(5)
-                    self.rotate()
+                    self.stopbot()
+                    
+                    twist = Twist()
+                    twist.linear.x = -speed
+                    twist.angular.z = 0.0
+                    self.publisher_.publish(twist)
+                    time.sleep(0.2)
+
+                    self.stopbot()
+                    self.go_to_furthest_point()
                     
         except Exception as e:
             print(e)
