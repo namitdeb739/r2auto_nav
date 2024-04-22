@@ -40,7 +40,7 @@ Install Gazebo
 sudo apt-get install ros-foxy-gazebo-*
 ```
 
-Install Cartogrpaher
+Install Cartographer
 
 ```bash
 sudo apt install ros-foxy-cartographer
