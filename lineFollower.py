@@ -32,7 +32,7 @@ rotatechange = -2.5 #max 2.8
 speedchange = 0.18 #max 0.22
 stop_distance = 0.25
 firstCheck = True
-isTurning = False
+# isTurning = False
 # espTime = time.now()
 checkPublish = Bool()
 checkPublish.data = False
@@ -122,7 +122,7 @@ class linerMover(Node):
             self.publish()
 
     def turnRight(self):
-        global isTurning
+        # global isTurning
         self.get_logger().info('turnRight')
         self.z = -rotatechange
         self.x = 0.0
@@ -136,10 +136,10 @@ class linerMover(Node):
         #     print(time.time()-startTime)
         #     if ([1,1] == [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]):
         #         break
-        isTurning = False
+        # isTurning = False
 
     def turnLeft(self):
-        global isTurning
+        # global isTurning
         self.get_logger().info('turnLeftttttttt')
         self.z = rotatechange
         self.x = 0.0
@@ -153,11 +153,11 @@ class linerMover(Node):
         #     print(time.time()-startTime)
         #     if ([1,1] == [GPIO.input(LL_PIN), GPIO.input(RR_PIN)]):
         #         break
-        isTurning = False
+        # isTurning = False
 
     def moveStraight(self):
-        global isTurning
-        isTurning = True
+        # global isTurning
+        # isTurning = True
         self.get_logger().info('stght')
         self.x = speedchange
         self.z = 0.0
