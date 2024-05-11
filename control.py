@@ -1,3 +1,43 @@
+"""
+This file contains the control logic for autonomous navigation of a robot.
+It includes functions for path planning, path following, and obstacle avoidance.
+
+Functions:
+- euler_from_quaternion(x, y, z, w): Convert quaternion to Euler angles.
+- heuristic(a, b): Calculate the heuristic distance between two points.
+- astar(array, start, goal): Implement the A* algorithm for path planning.
+- bspline_planning(array, sn): Generate a smooth path using B-spline interpolation.
+- pure_pursuit(current_x, current_y, current_heading, path, index): Implement the pure pursuit algorithm for path following.
+- frontier_B(matrix): Identify frontier cells in an occupancy grid.
+- assign_groups(matrix): Assign frontier cells to groups.
+- dfs(matrix, i, j, group, groups): Depth-first search algorithm for grouping frontier cells.
+- f_groups(groups): Filter and sort groups based on size.
+- calculate_centroid(x_coords, y_coords): Calculate the centroid of a group of points.
+- find_closest_group(matrix, groups, current, resolution, originX, originY): Find the closest group of frontier cells to the current position.
+- path_length(path): Calculate the length of a path.
+- costmap(data, width, height, resolution): Generate a costmap from sensor data.
+- exploration(data, width, height, resolution, column, row, originX, originY): Implement the exploration strategy.
+- localControl(scan): Implement the local control strategy.
+
+Classes:
+- NavigationControl(Node): A class that represents the navigation control of the robot. It includes methods for subscribing to sensor data, publishing control commands, and implementing the main control loop.
+    - __init__(): Initializes the node, publishers, subscribers, and other necessary variables.
+    - odom_callback(msg): Callback function for odometry data.
+    - map_callback(msg): Callback function for map data.
+    - scan_callback(msg): Callback function for scan data.
+    - control_loop(): The main control loop, which is called periodically to implement the navigation strategy.
+    - publish_velocity(linear, angular): Publishes a velocity command to the robot.
+
+Global Variables:
+- lookahead_distance: The distance to look ahead for the pure pursuit algorithm.
+- speed: The speed of the robot.
+- expansion_size: The expansion size for obstacle avoidance.
+- target_error: The target error for obstacle avoidance.
+- robot_security_radius: The security radius of the robot.
+- path_global: A global variable to store the current path.
+"""
+
+import rclpy
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid, Odometry
